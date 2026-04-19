@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrackAll — UI Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand-300: #a5b4fc; --brand-400: #818cf8; --brand-500: #6366f1;
+      --brand-600: #4f46e5; --brand-700: #4338ca; --brand-900: #312e81;
+      --dark-400: #94a3b8; --dark-500: #64748b; --dark-600: #475569;
+      --dark-700: #334155; --dark-800: #1e293b; --dark-900: #0f172a; --dark-950: #020617;
+    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--dark-950); color: #f1f5f9; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Navbar ── */
+    .navbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(15,23,42,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(51,65,85,0.5);
+      padding: 0 1.5rem;
+    }
+    .navbar-inner { max-width: 80rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+    .logo { display: flex; align-items: center; gap: 0.625rem; }
+    .logo-box { width: 2rem; height: 2rem; background: var(--brand-600); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; }
+    .logo-box svg { width: 1rem; height: 1rem; stroke: white; fill: none; }
+    .logo-text { font-weight: 800; font-size: 1.125rem; color: white; }
+    .logo-text span { color: var(--brand-400); }
+    .nav-links { display: flex; gap: 0.25rem; }
+    .nav-link { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--dark-400); transition: all 0.15s; }
+    .nav-link:hover, .nav-link.active { background: rgba(79,70,229,0.2); color: var(--brand-300); }
+    .nav-link svg { width: 1rem; height: 1rem; stroke: currentColor; fill: none; }
+    .sign-in { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--dark-400); }
+    .sign-in:hover { background: var(--dark-800); color: white; }
+
+    /* ── Sections ── */
+    .section { padding: 4rem 1.5rem; }
+    .container { max-width: 80rem; margin: 0 auto; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 5rem 1.5rem 4rem; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: 0; left: 25%; width: 24rem; height: 24rem; background: rgba(79,70,229,0.08); border-radius: 50%; filter: blur(80px); pointer-events: none; }
+    .hero::after  { content: ''; position: absolute; top: 5rem; right: 25%; width: 16rem; height: 16rem; background: rgba(124,58,237,0.08); border-radius: 50%; filter: blur(60px); pointer-events: none; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(79,70,229,0.1); border: 1px solid rgba(99,102,241,0.2); color: var(--brand-300); font-size: 0.75rem; font-weight: 600; padding: 0.375rem 0.75rem; border-radius: 9999px; margin-bottom: 1.5rem; }
+    .badge-dot { width: 0.375rem; height: 0.375rem; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
+    .hero h1 { font-size: clamp(2.25rem, 5vw, 3.75rem); font-weight: 800; line-height: 1.15; color: white; margin-bottom: 1.5rem; }
+    .gradient-text { background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #fb7185 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 1.125rem; color: var(--dark-400); max-width: 36rem; margin: 0 auto 2.5rem; line-height: 1.7; }
+    .search-box { max-width: 40rem; margin: 0 auto; display: flex; gap: 0.5rem; background: var(--dark-800); border: 1px solid var(--dark-600); border-radius: 1rem; padding: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); }
+    .search-box input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 0.9375rem; padding: 0.5rem 0.5rem; }
+    .search-box input::placeholder { color: var(--dark-400); }
+    .btn-primary { background: var(--brand-600); color: white; font-weight: 600; padding: 0.625rem 1.25rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.15s; }
+    .btn-primary:hover { background: #6366f1; }
+    .hero-hint { font-size: 0.75rem; color: var(--dark-500); margin-top: 1rem; }
+    .hero-hint a { color: var(--brand-400); text-decoration: underline; }
+
+    /* ── Courier strip ── */
+    .courier-strip { border-top: 1px solid rgba(51,65,85,0.5); border-bottom: 1px solid rgba(51,65,85,0.5); background: rgba(15,23,42,0.5); padding: 1.25rem 1.5rem; }
+    .courier-label { font-size: 0.6875rem; color: var(--dark-500); text-align: center; margin-bottom: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+    .courier-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+    .chip { font-size: 0.75rem; color: var(--dark-400); background: var(--dark-800); border: 1px solid var(--dark-700); padding: 0.375rem 0.75rem; border-radius: 0.5rem; }
+
+    /* ── Features ── */
+    .features { max-width: 80rem; margin: 0 auto; padding: 5rem 1.5rem; }
+    .section-title { font-size: 1.875rem; font-weight: 700; color: white; text-align: center; margin-bottom: 1rem; }
+    .section-sub { color: var(--dark-400); text-align: center; max-width: 28rem; margin: 0 auto 3rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+    .feature-card { background: var(--dark-800); border: 1px solid var(--dark-700); border-radius: 1rem; padding: 1.25rem; transition: border-color 0.2s; }
+    .feature-card:hover { border-color: var(--dark-600); }
+    .feature-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+    .feature-icon svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; }
+    .feature-card h3 { font-weight: 600; color: white; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.875rem; color: var(--dark-400); line-height: 1.6; }
+
+    /* ── Dashboard preview ── */
+    .dashboard { max-width: 80rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .dash-title { font-size: 1.5rem; font-weight: 700; color: white; }
+    .dash-sub { font-size: 0.875rem; color: var(--dark-400); margin-top: 0.25rem; }
+    .btn-secondary { background: var(--dark-700); border: 1px solid var(--dark-600); color: #cbd5e1; font-weight: 500; padding: 0.5rem 1rem; border-radius: 0.75rem; cursor: pointer; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--dark-800); border: 1px solid var(--dark-700); border-radius: 1rem; padding: 0.75rem 1rem; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; }
+    .stat-label { font-size: 0.75rem; color: var(--dark-500); margin-top: 0.125rem; }
+    .filter-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; }
+    .tab { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; border: 1px solid transparent; color: var(--dark-400); transition: all 0.15s; }
+    .tab:hover { color: white; background: var(--dark-700); }
+    .tab.active { background: rgba(79,70,229,0.2); color: var(--brand-300); border-color: rgba(99,102,241,0.3); }
+    .tab-count { font-size: 0.75rem; padding: 0.125rem 0.375rem; border-radius: 0.375rem; background: rgba(79,70,229,0.3); color: var(--brand-300); }
+    .delivery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+
+    /* ── Delivery card ── */
+    .delivery-card { background: var(--dark-800); border: 1px solid var(--dark-700); border-radius: 1rem; padding: 1.25rem; cursor: pointer; transition: all 0.2s; }
+    .delivery-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-1px); }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+    .courier-badge { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.625rem; border-radius: 0.5rem; }
+    .status-badge { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.625rem; border-radius: 9999px; border: 1px solid; }
+    .tracking-num { font-family: monospace; font-size: 0.875rem; font-weight: 600; color: white; letter-spacing: 0.05em; }
+    .product-name { font-size: 0.875rem; color: var(--dark-400); margin-top: 0.25rem; }
+    .progress-wrap { margin: 0.875rem 0; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--dark-500); margin-bottom: 0.375rem; }
+    .progress-bar { background: var(--dark-700); border-radius: 9999px; height: 0.375rem; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #4f46e5, #818cf8); transition: width 0.7s ease-out; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--dark-700); }
+    .location { display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; color: var(--dark-400); }
+    .location svg { width: 0.875rem; height: 0.875rem; stroke: currentColor; fill: none; }
+    .eta { font-size: 0.75rem; color: #fb923c; font-weight: 500; }
+
+    /* ── Map preview ── */
+    .map-section { max-width: 80rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .map-container { background: #1e293b; border: 1px solid var(--dark-700); border-radius: 1rem; height: 420px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .map-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f2240 100%); }
+    .map-grid { position: absolute; inset: 0; opacity: 0.12; background-image: linear-gradient(var(--dark-600) 1px, transparent 1px), linear-gradient(90deg, var(--dark-600) 1px, transparent 1px); background-size: 40px 40px; }
+    .map-label { position: relative; z-index: 2; text-align: center; }
+    .map-label p { color: var(--dark-400); font-size: 0.875rem; margin-top: 0.5rem; }
+    .map-pins { position: absolute; inset: 0; z-index: 2; }
+    .pin { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
+    .pin-label { font-size: 0.625rem; color: white; background: rgba(15,23,42,0.85); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+    .map-hud { position: absolute; top: 1rem; left: 1rem; z-index: 10; display: flex; flex-direction: column; gap: 0.5rem; }
+    .hud-card { background: rgba(15,23,42,0.9); border: 1px solid var(--dark-700); border-radius: 0.75rem; padding: 0.5rem 0.875rem; font-size: 0.75rem; color: white; display: flex; align-items: center; gap: 0.5rem; }
+    .hud-card svg { width: 0.875rem; height: 0.875rem; stroke: currentColor; fill: none; }
+
+    /* ── CTA ── */
+    .cta-section { max-width: 80rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .cta-box { background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%); border: 1px solid rgba(79,70,229,0.25); border-radius: 1.5rem; padding: 3rem; text-align: center; position: relative; overflow: hidden; }
+    .cta-box::after { content:''; position:absolute; top:0; right:0; width:16rem; height:16rem; background:rgba(79,70,229,0.08); border-radius:50%; filter:blur(60px); pointer-events:none; }
+    .cta-box h2 { font-size: 1.875rem; font-weight: 700; color: white; margin-bottom: 1rem; }
+    .cta-box p { color: var(--dark-400); max-width: 28rem; margin: 0 auto 2rem; }
+    .cta-btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Screen labels ── */
+    .screen-label { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .screen-label h2 { font-size: 1.25rem; font-weight: 700; color: white; }
+    .screen-label .badge-num { background: var(--brand-600); color: white; font-size: 0.75rem; font-weight: 700; padding: 0.125rem 0.5rem; border-radius: 9999px; }
+    .divider { height: 1px; background: var(--dark-700); max-width: 80rem; margin: 0 auto 3rem; }
+
+    /* ── Footer ── */
+    footer { border-top: 1px solid var(--dark-700); padding: 2rem 1.5rem; text-align: center; color: var(--dark-500); font-size: 0.875rem; }
+
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="logo">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      </div>
+      <span class="logo-text">Track<span>All</span></span>
+    </div>
+    <div class="nav-links">
+      <a href="#dashboard" class="nav-link active">
+        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        My Deliveries
+      </a>
+      <a href="#map" class="nav-link">
+        <svg viewBox="0 0 24 24" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Live Map
+      </a>
+      <a href="#search" class="nav-link">
+        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </a>
+      <a href="#" class="nav-link">
+        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notifications
+      </a>
+    </div>
+    <a href="#" class="sign-in">
+      <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor" style="width:1rem;height:1rem"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Sign In
+    </a>
+  </div>
+</nav>
+
+<!-- SCREEN 1: HOME -->
+<section id="home" class="hero">
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    Real-time tracking · 12+ couriers · India-wide
+  </div>
+  <h1>Track Every Delivery,<br><span class="gradient-text">All in One Place</span></h1>
+  <p>India's most comprehensive delivery tracker. Enter any tracking number and instantly see live status, location on map, and get alerts — no app required.</p>
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="width:1.25rem;height:1.25rem;flex-shrink:0;margin-left:0.5rem">
+      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+    </svg>
+    <input type="text" placeholder="Enter tracking number — any courier…" />
+    <button class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:1rem;height:1rem"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Track
+    </button>
+  </div>
+  <p class="hero-hint">Or <a href="#">create a free account</a> to save and manage all your deliveries</p>
+</section>
+
+<!-- Courier strip -->
+<div class="courier-strip">
+  <p class="courier-label">Supported Couriers</p>
+  <div class="courier-chips">
+    <span class="chip">Delhivery</span><span class="chip">BlueDart</span><span class="chip">DTDC</span>
+    <span class="chip">Ekart</span><span class="chip">India Post</span><span class="chip">XpressBees</span>
+    <span class="chip">Shadowfax</span><span class="chip">Amazon Logistics</span><span class="chip">Ecom Express</span>
+    <span class="chip">Shiprocket</span><span class="chip">Swiggy</span><span class="chip">Zomato</span>
+  </div>
+</div>
+
+<!-- Features -->
+<div class="features">
+  <p class="section-title">Everything you need to stay on top of deliveries</p>
+  <p class="section-sub">Built specifically for Indian consumers and businesses, with all the features you need in a clean, fast interface.</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(99,102,241,0.1)">
+        <svg viewBox="0 0 24 24" stroke="#818cf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </div>
+      <h3>12+ Courier Partners</h3>
+      <p>Delhivery, BlueDart, DTDC, Ekart, India Post, XpressBees and more in one dashboard.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(234,179,8,0.1)">
+        <svg viewBox="0 0 24 24" stroke="#facc15" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <h3>Real-Time Updates</h3>
+      <p>Live WebSocket updates so you know the moment your package moves.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(34,197,94,0.1)">
+        <svg viewBox="0 0 24 24" stroke="#4ade80" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <h3>Live Map View</h3>
+      <p>Visualise your package journey on an interactive map of India with real-time movement.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(168,85,247,0.1)">
+        <svg viewBox="0 0 24 24" stroke="#c084fc" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <h3>Smart Notifications</h3>
+      <p>Push, SMS and email alerts for every status change, delay, and delivery.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(249,115,22,0.1)">
+        <svg viewBox="0 0 24 24" stroke="#fb923c" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <h3>Universal Search</h3>
+      <p>Search across all couriers with a single tracking number or phone number.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(239,68,68,0.1)">
+        <svg viewBox="0 0 24 24" stroke="#f87171" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>Secure &amp; Private</h3>
+      <p>Your data is encrypted. Phone-based OTP login, JWT auth, rate limiting.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SCREEN 2: DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="screen-label">
+    <span class="badge-num">Screen 2</span>
+    <h2>My Deliveries Dashboard</h2>
+  </div>
+
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">My Deliveries</div>
+      <div class="dash-sub">8 shipments · 5 active</div>
+    </div>
+    <div style="display:flex;gap:0.5rem">
+      <button class="btn-secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:1rem;height:1rem"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:1rem;height:1rem"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Shipment
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" style="color:white">8</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#818cf8">5</div><div class="stat-label">Active</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#fb923c">2</div><div class="stat-label">Out for Delivery</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#f87171">1</div><div class="stat-label">Delayed</div></div>
+  </div>
+
+  <div class="filter-tabs">
+    <div class="tab active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:0.875rem;height:0.875rem"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      All <span class="tab-count">8</span>
+    </div>
+    <div class="tab">🚚 In Transit <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">3</span></div>
+    <div class="tab">🛵 Out for Delivery <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">2</span></div>
+    <div class="tab">✅ Delivered <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">2</span></div>
+    <div class="tab">⚠️ Delayed <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">1</span></div>
+  </div>
+
+  <div class="delivery-grid">
+    <!-- Card 1 -->
+    <div class="delivery-card">
+      <div class="card-top">
+        <span class="courier-badge" style="background:rgba(212,45,39,0.15);color:#D42D27">Delhivery</span>
+        <span class="status-badge" style="background:rgba(249,115,22,0.15);color:#fb923c;border-color:rgba(249,115,22,0.3)">
+          <span style="width:6px;height:6px;background:#fb923c;border-radius:50%;display:inline-block"></span>
+          Out for Delivery
+        </span>
+      </div>
+      <div class="tracking-num">DEL7429287160</div>
+      <div class="product-name">OnePlus 12 5G Smartphone</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Out for Delivery</span><span>85%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+      </div>
+      <div class="card-footer">
+        <span class="location">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Mumbai, MH
+        </span>
+        <span class="eta">Arriving Today</span>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="delivery-card">
+      <div class="card-top">
+        <span class="courier-badge" style="background:rgba(0,56,130,0.2);color:#4a90d9">BlueDart</span>
+        <span class="status-badge" style="background:rgba(234,179,8,0.15);color:#facc15;border-color:rgba(234,179,8,0.3)">
+          <span style="width:6px;height:6px;background:#facc15;border-radius:50%;display:inline-block"></span>
+          In Transit
+        </span>
+      </div>
+      <div class="tracking-num">BD12345678901</div>
+      <div class="product-name">Nike Air Max 270 — Size 9</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>In Transit</span><span>60%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+      </div>
+      <div class="card-footer">
+        <span class="location">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Pune, MH
+        </span>
+        <span style="font-size:0.75rem;color:#facc15;font-weight:500">Tomorrow, 2–6 PM</span>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="delivery-card">
+      <div class="card-top">
+        <span class="courier-badge" style="background:rgba(249,168,37,0.15);color:#F9A825">Ekart</span>
+        <span class="status-badge" style="background:rgba(239,68,68,0.15);color:#f87171;border-color:rgba(239,68,68,0.3)">
+          <span style="width:6px;height:6px;background:#f87171;border-radius:50%;display:inline-block"></span>
+          Delayed
+        </span>
+      </div>
+      <div class="tracking-num">EKT9988776655</div>
+      <div class="product-name">Samsung Galaxy Watch 6</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Delayed</span><span>55%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:55%;background:linear-gradient(90deg,#dc2626,#f87171)"></div></div>
+      </div>
+      <div class="card-footer">
+        <span class="location">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Bengaluru, KA
+        </span>
+        <span style="font-size:0.75rem;color:#f87171;font-weight:500">Delayed 2 days</span>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="delivery-card">
+      <div class="card-top">
+        <span class="courier-badge" style="background:rgba(255,107,0,0.15);color:#FF6B00">XpressBees</span>
+        <span class="status-badge" style="background:rgba(34,197,94,0.15);color:#4ade80;border-color:rgba(34,197,94,0.3)">
+          <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>
+          Delivered
+        </span>
+      </div>
+      <div class="tracking-num">XB55443322110</div>
+      <div class="product-name">Lakme Absolute Lipstick Set</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Delivered</span><span>100%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div>
+      </div>
+      <div class="card-footer">
+        <span class="location">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Delhi, DL
+        </span>
+        <span style="font-size:0.75rem;color:#4ade80;font-weight:500">Delivered ✓</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SCREEN 3: GLOBAL MAP -->
+<div class="map-section" id="map">
+  <div class="screen-label">
+    <span class="badge-num">Screen 3</span>
+    <h2>Global Live Map — All Packages</h2>
+  </div>
+
+  <div class="map-container">
+    <div class="map-bg"></div>
+    <div class="map-grid"></div>
+
+    <!-- HUD cards -->
+    <div class="map-hud">
+      <div class="hud-card">
+        <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        8 active packages
+      </div>
+      <div class="hud-card">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span style="color:#fb923c">2 out for delivery</span>
+      </div>
+      <div class="hud-card" style="font-size:0.6875rem">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Refreshing in 47s
+      </div>
+    </div>
+
+    <!-- Animated pins -->
+    <div class="map-pins">
+      <div class="pin" style="left:38%;top:25%">
+        <div class="pin-dot" style="background:#fb923c"></div>
+        <div class="pin-label">Delhivery · OFD</div>
+      </div>
+      <div class="pin" style="left:27%;top:42%">
+        <div class="pin-dot" style="background:#facc15"></div>
+        <div class="pin-label">BlueDart · Transit</div>
+      </div>
+      <div class="pin" style="left:55%;top:55%">
+        <div class="pin-dot" style="background:#f87171"></div>
+        <div class="pin-label">Ekart · Delayed</div>
+      </div>
+      <div class="pin" style="left:48%;top:35%">
+        <div class="pin-dot" style="background:#4ade80"></div>
+        <div class="pin-label">XpressBees · Delivered</div>
+      </div>
+      <div class="pin" style="left:63%;top:30%">
+        <div class="pin-dot" style="background:#818cf8"></div>
+        <div class="pin-label">India Post · Shipped</div>
+      </div>
+      <div class="pin" style="left:22%;top:60%">
+        <div class="pin-dot" style="background:#fb923c;animation:pulse 1.5s infinite"></div>
+        <div class="pin-label">Shadowfax · OFD</div>
+      </div>
+    </div>
+
+    <!-- Center label -->
+    <div class="map-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5" style="width:3rem;height:3rem;margin:0 auto"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <p>Interactive Leaflet map · real-time package locations across India</p>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem;margin-top:1rem">
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#fb923c;flex-shrink:0"></span> Out for Delivery</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#facc15;flex-shrink:0"></span> In Transit</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#f87171;flex-shrink:0"></span> Delayed</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#4ade80;flex-shrink:0"></span> Delivered</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#818cf8;flex-shrink:0"></span> Shipped</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#94a3b8;flex-shrink:0"></span> Order Placed</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.5" style="width:3rem;height:3rem;margin:0 auto 1rem"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    <h2>Start tracking for free</h2>
+    <p>Sign up with your phone number and track unlimited shipments from all your favourite shopping apps.</p>
+    <div class="cta-btns">
+      <button class="btn-primary" style="font-size:0.9375rem;padding:0.75rem 1.5rem">
+        Get Started Free
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:1rem;height:1rem"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="btn-secondary" style="font-size:0.9375rem;padding:0.75rem 1.5rem">View Demo Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>TrackAll — Universal Delivery Tracker for India &nbsp;·&nbsp; Built with Next.js 15 + Express + PostgreSQL + Electron</p>
+  <p style="margin-top:0.5rem;font-size:0.75rem">Supports: Delhivery · BlueDart · DTDC · Ekart · India Post · XpressBees · Shadowfax · Shiprocket · Ecom Express</p>
+</footer>
+
+</body>
+</html>
