@@ -1,0 +1,77 @@
+{
+  "name": "trackall-desktop",
+  "version": "1.0.0",
+  "description": "TrackAll — Universal Delivery Tracker for India (Desktop)",
+  "main": "src/main.js",
+  "homepage": "https://trackall.in",
+  "author": {
+    "name": "TrackAll",
+    "email": "support@trackall.in"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "ELECTRON_IS_DEV=1 electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder --win --mac --linux",
+    "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "electron-updater": "^6.2.1",
+    "electron-log": "^5.1.5",
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "electron": "^31.1.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "in.trackall.app",
+    "productName": "TrackAll",
+    "copyright": "Copyright © 2024 TrackAll",
+    "files": [
+      "src/**/*",
+      "assets/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "assets/icon.ico",
+      "publisherName": "TrackAll"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": ["AppImage", "deb", "rpm"],
+      "icon": "assets/icon.png",
+      "category": "Network"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "protocols": [
+      {
+        "name": "TrackAll Protocol",
+        "schemes": ["trackall"]
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "mahak867",
+      "repo": "deliviery-monitor"
+    }
+  }
+}
