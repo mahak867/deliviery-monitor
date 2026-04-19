@@ -1,404 +1,828 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TrackAll — UI Preview</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --brand-300: #a5b4fc; --brand-400: #818cf8; --brand-500: #6366f1;
-      --brand-600: #4f46e5; --brand-700: #4338ca; --brand-900: #312e81;
-      --dark-400: #94a3b8; --dark-500: #64748b; --dark-600: #475569;
-      --dark-700: #334155; --dark-800: #1e293b; --dark-900: #0f172a; --dark-950: #020617;
-    }
-    body { font-family: 'Inter', system-ui, sans-serif; background: var(--dark-950); color: #f1f5f9; overflow-x: hidden; }
-    a { color: inherit; text-decoration: none; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TrackAll — Universal Delivery Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* ─── RESET & TOKENS ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* palette */
+  --bg:        #060912;
+  --bg2:       #0c1120;
+  --surface:   #111827;
+  --surface2:  #1a2236;
+  --border:    #1f2d45;
+  --border2:   #28395a;
+  --text:      #e8edf5;
+  --muted:     #566986;
+  --muted2:    #8fa0be;
+  /* brand */
+  --indigo:    #6366f1;
+  --indigo-d:  #4f46e5;
+  --indigo-l:  #818cf8;
+  --violet:    #8b5cf6;
+  --violet-l:  #a78bfa;
+  /* status */
+  --ofd:       #f97316;
+  --transit:   #eab308;
+  --delayed:   #ef4444;
+  --delivered: #22c55e;
+  --shipped:   #818cf8;
+  /* sizing */
+  --r-sm:  .625rem;
+  --r-md:  .875rem;
+  --r-lg:  1.25rem;
+  --r-xl:  1.5rem;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg); color:var(--text);
+  line-height:1.6; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
 
-    /* ── Navbar ── */
-    .navbar {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(15,23,42,0.85); backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(51,65,85,0.5);
-      padding: 0 1.5rem;
-    }
-    .navbar-inner { max-width: 80rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
-    .logo { display: flex; align-items: center; gap: 0.625rem; }
-    .logo-box { width: 2rem; height: 2rem; background: var(--brand-600); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; }
-    .logo-box svg { width: 1rem; height: 1rem; stroke: white; fill: none; }
-    .logo-text { font-weight: 800; font-size: 1.125rem; color: white; }
-    .logo-text span { color: var(--brand-400); }
-    .nav-links { display: flex; gap: 0.25rem; }
-    .nav-link { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--dark-400); transition: all 0.15s; }
-    .nav-link:hover, .nav-link.active { background: rgba(79,70,229,0.2); color: var(--brand-300); }
-    .nav-link svg { width: 1rem; height: 1rem; stroke: currentColor; fill: none; }
-    .sign-in { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--dark-400); }
-    .sign-in:hover { background: var(--dark-800); color: white; }
+/* ─── ANIMATIONS ─── */
+@keyframes pulse-ring{0%{transform:scale(.85);opacity:.8}70%{transform:scale(1.4);opacity:0}100%{transform:scale(.85);opacity:0}}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes fade-up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-10px)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes progress-in{from{width:0}to{width:var(--w)}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    /* ── Sections ── */
-    .section { padding: 4rem 1.5rem; }
-    .container { max-width: 80rem; margin: 0 auto; }
+/* ─── AURORA BG ─── */
+.aurora-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.aurora-orb{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;
+  animation:aurora 12s ease infinite alternate;
+}
+.aurora-orb:nth-child(1){width:700px;height:700px;top:-200px;left:-150px;background:radial-gradient(circle,#6366f1,#8b5cf6 60%,transparent)}
+.aurora-orb:nth-child(2){width:500px;height:500px;top:30%;right:-100px;background:radial-gradient(circle,#3b82f6,#06b6d4 60%,transparent);animation-delay:-4s}
+.aurora-orb:nth-child(3){width:400px;height:400px;bottom:10%;left:30%;background:radial-gradient(circle,#a855f7,#6366f1 60%,transparent);animation-delay:-8s}
 
-    /* ── Hero ── */
-    .hero { text-align: center; padding: 5rem 1.5rem 4rem; position: relative; overflow: hidden; }
-    .hero::before { content: ''; position: absolute; top: 0; left: 25%; width: 24rem; height: 24rem; background: rgba(79,70,229,0.08); border-radius: 50%; filter: blur(80px); pointer-events: none; }
-    .hero::after  { content: ''; position: absolute; top: 5rem; right: 25%; width: 16rem; height: 16rem; background: rgba(124,58,237,0.08); border-radius: 50%; filter: blur(60px); pointer-events: none; }
-    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(79,70,229,0.1); border: 1px solid rgba(99,102,241,0.2); color: var(--brand-300); font-size: 0.75rem; font-weight: 600; padding: 0.375rem 0.75rem; border-radius: 9999px; margin-bottom: 1.5rem; }
-    .badge-dot { width: 0.375rem; height: 0.375rem; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
-    .hero h1 { font-size: clamp(2.25rem, 5vw, 3.75rem); font-weight: 800; line-height: 1.15; color: white; margin-bottom: 1.5rem; }
-    .gradient-text { background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #fb7185 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .hero p { font-size: 1.125rem; color: var(--dark-400); max-width: 36rem; margin: 0 auto 2.5rem; line-height: 1.7; }
-    .search-box { max-width: 40rem; margin: 0 auto; display: flex; gap: 0.5rem; background: var(--dark-800); border: 1px solid var(--dark-600); border-radius: 1rem; padding: 0.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); }
-    .search-box input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 0.9375rem; padding: 0.5rem 0.5rem; }
-    .search-box input::placeholder { color: var(--dark-400); }
-    .btn-primary { background: var(--brand-600); color: white; font-weight: 600; padding: 0.625rem 1.25rem; border-radius: 0.75rem; border: none; cursor: pointer; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.15s; }
-    .btn-primary:hover { background: #6366f1; }
-    .hero-hint { font-size: 0.75rem; color: var(--dark-500); margin-top: 1rem; }
-    .hero-hint a { color: var(--brand-400); text-decoration: underline; }
+/* ─── NAV ─── */
+nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(6,9,18,.85);
+  backdrop-filter:blur(20px) saturate(1.4);
+  -webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border-bottom:1px solid rgba(99,102,241,.12);
+}
+.nav-inner{
+  max-width:80rem;margin:0 auto;
+  display:flex;align-items:center;height:3.75rem;gap:1.25rem;
+  padding:0 1.5rem;
+}
+.logo{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:1.125rem;font-weight:800;letter-spacing:-.03em;
+  display:flex;align-items:center;gap:.3125rem;
+  white-space:nowrap;
+}
+.logo-icon{
+  width:1.75rem;height:1.75rem;
+  background:linear-gradient(135deg,var(--indigo),var(--violet));
+  border-radius:.4375rem;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.logo-icon svg{width:.9375rem;height:.9375rem;stroke:white;fill:none;stroke-width:2.5}
+.logo-text{color:white}
+.logo-dot{color:var(--indigo-l)}
+.nav-pill{
+  display:flex;gap:2px;
+  background:rgba(26,34,54,.8);
+  border:1px solid var(--border);
+  border-radius:.625rem;padding:3px;
+}
+.nav-pill a{
+  display:flex;align-items:center;gap:.3125rem;
+  font-size:.8125rem;font-weight:500;color:var(--muted);
+  padding:.3125rem .75rem;border-radius:.4375rem;
+  transition:all .15s;
+}
+.nav-pill a svg{width:.875rem;height:.875rem;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+.nav-pill a.on{background:rgba(99,102,241,.18);color:var(--indigo-l);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.nav-pill a:hover:not(.on){color:var(--muted2)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:.625rem}
+.nav-notif{
+  position:relative;width:2.25rem;height:2.25rem;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:.5625rem;cursor:pointer;color:var(--muted);
+  transition:all .15s;
+}
+.nav-notif:hover{border-color:var(--border2);color:var(--muted2)}
+.nav-notif svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2}
+.notif-badge{
+  position:absolute;top:-.25rem;right:-.25rem;
+  width:.875rem;height:.875rem;
+  background:var(--ofd);border-radius:50%;
+  border:2px solid var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.4375rem;font-weight:700;color:white;
+}
+.btn-ghost{
+  font-size:.8125rem;font-weight:500;color:var(--muted2);
+  background:transparent;border:1px solid var(--border);
+  border-radius:.5rem;padding:.375rem .875rem;cursor:pointer;
+  transition:all .15s;
+}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
+.btn-accent{
+  font-size:.8125rem;font-weight:600;color:white;
+  background:linear-gradient(135deg,var(--indigo),var(--violet));
+  border:none;border-radius:.5rem;
+  padding:.4375rem 1rem;cursor:pointer;
+  box-shadow:0 0 0 0 rgba(99,102,241,.4);
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.btn-accent::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);
+  opacity:0;transition:opacity .15s;
+}
+.btn-accent:hover{box-shadow:0 0 20px rgba(99,102,241,.4);transform:translateY(-1px)}
+.btn-accent:hover::after{opacity:1}
 
-    /* ── Courier strip ── */
-    .courier-strip { border-top: 1px solid rgba(51,65,85,0.5); border-bottom: 1px solid rgba(51,65,85,0.5); background: rgba(15,23,42,0.5); padding: 1.25rem 1.5rem; }
-    .courier-label { font-size: 0.6875rem; color: var(--dark-500); text-align: center; margin-bottom: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
-    .courier-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
-    .chip { font-size: 0.75rem; color: var(--dark-400); background: var(--dark-800); border: 1px solid var(--dark-700); padding: 0.375rem 0.75rem; border-radius: 0.5rem; }
+/* ─── HERO ─── */
+.hero{
+  position:relative;z-index:1;
+  padding:7rem 1.5rem 5rem;
+  text-align:center;
+}
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--indigo-l);
+  background:rgba(99,102,241,.08);
+  border:1px solid rgba(99,102,241,.2);
+  padding:.3125rem .875rem;border-radius:9999px;
+  margin-bottom:1.5rem;
+  animation:fade-up .6s ease both;
+}
+.hero-kicker-dot{
+  width:.4375rem;height:.4375rem;border-radius:50%;
+  background:var(--delivered);
+  box-shadow:0 0 6px var(--delivered);
+  animation:pulse-dot 2s infinite;
+}
+.hero h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(2.75rem,7vw,5rem);
+  font-weight:800;line-height:1.04;letter-spacing:-.05em;
+  color:white;margin-bottom:1.25rem;
+  animation:fade-up .6s ease .1s both;
+}
+.hero h1 .word-gradient{
+  background:linear-gradient(135deg,var(--indigo-l) 0%,var(--violet-l) 50%,#a78bfa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+  font-size:1.0625rem;color:var(--muted2);line-height:1.7;
+  max-width:30rem;margin:0 auto 2.5rem;
+  animation:fade-up .6s ease .2s both;
+}
+.search-wrap{
+  max-width:36rem;margin:0 auto;
+  animation:fade-up .6s ease .3s both;
+}
+.search-row{
+  display:flex;gap:0;
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:0 0 0 5px rgba(99,102,241,.07),0 24px 48px -12px rgba(0,0,0,.6);
+}
+.search-row-left{display:flex;align-items:center;flex:1;gap:.5rem;padding:.875rem 1rem}
+.search-row-left svg{width:1rem;height:1rem;stroke:var(--muted);fill:none;stroke-width:2;flex-shrink:0}
+.search-row input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:.9375rem;font-family:inherit;
+}
+.search-row input::placeholder{color:var(--muted)}
+.search-divider{width:1px;background:var(--border2);margin:.5rem 0;align-self:stretch}
+.courier-select{
+  display:flex;align-items:center;gap:.375rem;
+  padding:.875rem .875rem;font-size:.8125rem;
+  color:var(--muted);cursor:pointer;white-space:nowrap;
+  background:transparent;border:none;outline:none;
+}
+.courier-select svg{width:.875rem;height:.875rem;stroke:currentColor;fill:none;stroke-width:2}
+.search-btn{
+  background:linear-gradient(135deg,var(--indigo),var(--violet));
+  color:white;border:none;
+  font-size:.875rem;font-weight:600;
+  padding:.875rem 1.25rem;cursor:pointer;
+  display:flex;align-items:center;gap:.5rem;
+  white-space:nowrap;transition:filter .15s;
+}
+.search-btn:hover{filter:brightness(1.12)}
+.search-btn svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2}
+.search-hints{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;
+  margin-top:.875rem;
+}
+.hint-chip{
+  font-size:.75rem;color:var(--muted);
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  padding:.25rem .625rem;border-radius:9999px;
+  cursor:pointer;transition:all .12s;
+}
+.hint-chip:hover{color:var(--muted2);border-color:var(--border2)}
+.hero-trust{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  font-size:.75rem;color:var(--muted);margin-top:1.5rem;
+  animation:fade-up .6s ease .4s both;
+}
+.hero-trust-ava{
+  display:flex;
+}
+.hero-trust-ava span{
+  width:1.5rem;height:1.5rem;border-radius:50%;
+  border:2px solid var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.625rem;font-weight:700;
+  margin-left:-.4375rem;
+}
+.hero-trust-ava span:first-child{margin-left:0}
 
-    /* ── Features ── */
-    .features { max-width: 80rem; margin: 0 auto; padding: 5rem 1.5rem; }
-    .section-title { font-size: 1.875rem; font-weight: 700; color: white; text-align: center; margin-bottom: 1rem; }
-    .section-sub { color: var(--dark-400); text-align: center; max-width: 28rem; margin: 0 auto 3rem; }
-    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
-    .feature-card { background: var(--dark-800); border: 1px solid var(--dark-700); border-radius: 1rem; padding: 1.25rem; transition: border-color 0.2s; }
-    .feature-card:hover { border-color: var(--dark-600); }
-    .feature-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
-    .feature-icon svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; }
-    .feature-card h3 { font-weight: 600; color: white; margin-bottom: 0.5rem; }
-    .feature-card p { font-size: 0.875rem; color: var(--dark-400); line-height: 1.6; }
+/* ─── BELT ─── */
+.belt{
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:.875rem 0;overflow:hidden;
+  background:linear-gradient(to right,var(--bg) 0%,transparent 8%,transparent 92%,var(--bg) 100%);
+}
+.belt-fade-l,.belt-fade-r{
+  position:absolute;top:0;bottom:0;width:6rem;z-index:2;pointer-events:none;
+}
+.belt-fade-l{left:0;background:linear-gradient(to right,var(--bg),transparent)}
+.belt-fade-r{right:0;background:linear-gradient(to left,var(--bg),transparent)}
+.belt-track{
+  display:flex;gap:.625rem;width:max-content;
+  animation:ticker 28s linear infinite;
+}
+.belt:hover .belt-track{animation-play-state:paused}
+.belt-chip{
+  display:flex;align-items:center;gap:.375rem;
+  font-size:.75rem;font-weight:500;color:var(--muted);
+  background:var(--surface);border:1px solid var(--border);
+  padding:.3125rem .875rem;border-radius:9999px;white-space:nowrap;
+  transition:all .12s;
+}
+.belt-chip:hover{color:var(--muted2);border-color:var(--border2)}
+.belt-chip-dot{width:5px;height:5px;border-radius:50%;background:var(--indigo-l)}
 
-    /* ── Dashboard preview ── */
-    .dashboard { max-width: 80rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
-    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-    .dash-title { font-size: 1.5rem; font-weight: 700; color: white; }
-    .dash-sub { font-size: 0.875rem; color: var(--dark-400); margin-top: 0.25rem; }
-    .btn-secondary { background: var(--dark-700); border: 1px solid var(--dark-600); color: #cbd5e1; font-weight: 500; padding: 0.5rem 1rem; border-radius: 0.75rem; cursor: pointer; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; }
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
-    .stat-card { background: var(--dark-800); border: 1px solid var(--dark-700); border-radius: 1rem; padding: 0.75rem 1rem; }
-    .stat-val { font-size: 1.5rem; font-weight: 700; }
-    .stat-label { font-size: 0.75rem; color: var(--dark-500); margin-top: 0.125rem; }
-    .filter-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; }
-    .tab { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer; border: 1px solid transparent; color: var(--dark-400); transition: all 0.15s; }
-    .tab:hover { color: white; background: var(--dark-700); }
-    .tab.active { background: rgba(79,70,229,0.2); color: var(--brand-300); border-color: rgba(99,102,241,0.3); }
-    .tab-count { font-size: 0.75rem; padding: 0.125rem 0.375rem; border-radius: 0.375rem; background: rgba(79,70,229,0.3); color: var(--brand-300); }
-    .delivery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+/* ─── LAYOUT ─── */
+.container{max-width:80rem;margin:0 auto;padding:0 1.5rem}
+.section{position:relative;z-index:1;padding:5rem 0}
+.section-inner{max-width:80rem;margin:0 auto;padding:0 1.5rem}
+.section-tag{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--indigo-l);
+  background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.18);
+  padding:.25rem .625rem;border-radius:9999px;margin-bottom:.875rem;
+}
+.section-tag svg{width:.6875rem;height:.6875rem;fill:var(--indigo-l)}
+.section-heading{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:700;
+  letter-spacing:-.03em;color:white;margin-bottom:.5rem;
+}
+.section-sub{font-size:.9375rem;color:var(--muted);line-height:1.6;max-width:32rem}
+.divider{height:1px;background:var(--border);margin:0 1.5rem}
 
-    /* ── Delivery card ── */
-    .delivery-card { background: var(--dark-800); border: 1px solid var(--dark-700); border-radius: 1rem; padding: 1.25rem; cursor: pointer; transition: all 0.2s; }
-    .delivery-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-1px); }
-    .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
-    .courier-badge { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.625rem; border-radius: 0.5rem; }
-    .status-badge { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.625rem; border-radius: 9999px; border: 1px solid; }
-    .tracking-num { font-family: monospace; font-size: 0.875rem; font-weight: 600; color: white; letter-spacing: 0.05em; }
-    .product-name { font-size: 0.875rem; color: var(--dark-400); margin-top: 0.25rem; }
-    .progress-wrap { margin: 0.875rem 0; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--dark-500); margin-bottom: 0.375rem; }
-    .progress-bar { background: var(--dark-700); border-radius: 9999px; height: 0.375rem; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #4f46e5, #818cf8); transition: width 0.7s ease-out; }
-    .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--dark-700); }
-    .location { display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; color: var(--dark-400); }
-    .location svg { width: 0.875rem; height: 0.875rem; stroke: currentColor; fill: none; }
-    .eta { font-size: 0.75rem; color: #fb923c; font-weight: 500; }
+/* ─── FEATURES ─── */
+.feat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;
+}
+.feat{
+  background:var(--surface);padding:1.5rem;
+  transition:background .2s;position:relative;overflow:hidden;
+}
+.feat::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 0% 0%,var(--feat-glow,.1) 0%,transparent 70%);
+  opacity:0;transition:opacity .3s;pointer-events:none;
+}
+.feat:hover{background:var(--surface2)}
+.feat:hover::before{opacity:1}
+.feat-icon-wrap{
+  width:2.5rem;height:2.5rem;border-radius:.75rem;
+  background:var(--feat-bg,rgba(99,102,241,.12));
+  border:1px solid var(--feat-border,rgba(99,102,241,.2));
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:1rem;font-size:1.125rem;
+}
+.feat h3{font-size:.9375rem;font-weight:600;color:white;margin-bottom:.375rem}
+.feat p{font-size:.8125rem;color:var(--muted);line-height:1.6}
 
-    /* ── Map preview ── */
-    .map-section { max-width: 80rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
-    .map-container { background: #1e293b; border: 1px solid var(--dark-700); border-radius: 1rem; height: 420px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    .map-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f2240 100%); }
-    .map-grid { position: absolute; inset: 0; opacity: 0.12; background-image: linear-gradient(var(--dark-600) 1px, transparent 1px), linear-gradient(90deg, var(--dark-600) 1px, transparent 1px); background-size: 40px 40px; }
-    .map-label { position: relative; z-index: 2; text-align: center; }
-    .map-label p { color: var(--dark-400); font-size: 0.875rem; margin-top: 0.5rem; }
-    .map-pins { position: absolute; inset: 0; z-index: 2; }
-    .pin { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
-    .pin-label { font-size: 0.625rem; color: white; background: rgba(15,23,42,0.85); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
-    .map-hud { position: absolute; top: 1rem; left: 1rem; z-index: 10; display: flex; flex-direction: column; gap: 0.5rem; }
-    .hud-card { background: rgba(15,23,42,0.9); border: 1px solid var(--dark-700); border-radius: 0.75rem; padding: 0.5rem 0.875rem; font-size: 0.75rem; color: white; display: flex; align-items: center; gap: 0.5rem; }
-    .hud-card svg { width: 0.875rem; height: 0.875rem; stroke: currentColor; fill: none; }
+/* ─── STATS BENTO ─── */
+.stats-bento{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:.75rem;margin-bottom:1.5rem;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:1.25rem;
+  display:flex;flex-direction:column;gap:.375rem;
+  position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s;
+}
+.stat-card::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 0% 0%,var(--stat-glow) 0%,transparent 70%);
+  opacity:.06;pointer-events:none;
+}
+.stat-card:hover{border-color:var(--stat-color,var(--border2));box-shadow:0 0 24px -8px var(--stat-glow,rgba(99,102,241,.25))}
+.stat-icon{width:2rem;height:2rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;margin-bottom:.25rem}
+.stat-icon svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2}
+.stat-num{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:2.25rem;font-weight:800;line-height:1;letter-spacing:-.04em;
+}
+.stat-label{font-size:.75rem;color:var(--muted);font-weight:500}
+.stat-delta{display:inline-flex;align-items:center;gap:.25rem;font-size:.6875rem;font-weight:600;margin-top:.125rem}
+.stat-delta svg{width:.625rem;height:.625rem;stroke:currentColor;fill:none;stroke-width:2.5}
 
-    /* ── CTA ── */
-    .cta-section { max-width: 80rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
-    .cta-box { background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%); border: 1px solid rgba(79,70,229,0.25); border-radius: 1.5rem; padding: 3rem; text-align: center; position: relative; overflow: hidden; }
-    .cta-box::after { content:''; position:absolute; top:0; right:0; width:16rem; height:16rem; background:rgba(79,70,229,0.08); border-radius:50%; filter:blur(60px); pointer-events:none; }
-    .cta-box h2 { font-size: 1.875rem; font-weight: 700; color: white; margin-bottom: 1rem; }
-    .cta-box p { color: var(--dark-400); max-width: 28rem; margin: 0 auto 2rem; }
-    .cta-btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+/* ─── TABS ─── */
+.tabs-row{
+  display:flex;gap:.375rem;margin-bottom:1.25rem;
+  overflow-x:auto;padding-bottom:2px;scrollbar-width:none;
+}
+.tabs-row::-webkit-scrollbar{display:none}
+.tab-btn{
+  display:inline-flex;align-items:center;gap:.375rem;
+  font-size:.8125rem;font-weight:500;color:var(--muted);
+  background:transparent;border:1px solid transparent;
+  border-radius:.5rem;padding:.375rem .75rem;
+  cursor:pointer;white-space:nowrap;
+  transition:all .15s;
+}
+.tab-btn:hover{color:var(--muted2);border-color:var(--border)}
+.tab-btn.active{
+  color:var(--indigo-l);
+  background:rgba(99,102,241,.1);
+  border-color:rgba(99,102,241,.25);
+}
+.tab-n{
+  font-size:.625rem;font-weight:700;
+  padding:.125rem .375rem;border-radius:.3125rem;
+}
+.tab-btn.active .tab-n{background:rgba(99,102,241,.25);color:var(--indigo-l)}
+.tab-btn:not(.active) .tab-n{background:var(--border);color:var(--muted)}
 
-    /* ── Screen labels ── */
-    .screen-label { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
-    .screen-label h2 { font-size: 1.25rem; font-weight: 700; color: white; }
-    .screen-label .badge-num { background: var(--brand-600); color: white; font-size: 0.75rem; font-weight: 700; padding: 0.125rem 0.5rem; border-radius: 9999px; }
-    .divider { height: 1px; background: var(--dark-700); max-width: 80rem; margin: 0 auto 3rem; }
+/* ─── DELIVERY CARDS ─── */
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:1rem;
+}
+.dcard{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:1.25rem;cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.dcard::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:3px;background:var(--dcard-accent,var(--indigo));
+  border-radius:var(--r-lg) 0 0 var(--r-lg);
+  transform:scaleY(0);transform-origin:center;
+  transition:transform .25s;
+}
+.dcard:hover{
+  border-color:var(--border2);
+  box-shadow:0 8px 32px -8px rgba(0,0,0,.5);
+  transform:translateY(-2px);
+}
+.dcard:hover::before{transform:scaleY(1)}
+.dcard-top{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:.75rem;
+}
+.courier-badge{
+  font-size:.6875rem;font-weight:700;letter-spacing:.04em;
+  padding:.25rem .5625rem;border-radius:.375rem;
+}
+.status-badge{
+  display:inline-flex;align-items:center;gap:.3125rem;
+  font-size:.6875rem;font-weight:600;
+  padding:.25rem .5rem;border-radius:9999px;border:1px solid;
+}
+.status-dot{
+  width:6px;height:6px;border-radius:50%;position:relative;
+}
+.status-dot.live::before{
+  content:'';position:absolute;inset:-.125rem;
+  border-radius:50%;background:inherit;
+  animation:pulse-ring 1.8s ease infinite;
+}
+.dcard-num{
+  font-family:'Space Grotesk',monospace;
+  font-size:.9375rem;font-weight:600;color:white;
+  letter-spacing:.02em;margin-bottom:.1875rem;
+}
+.dcard-product{font-size:.8125rem;color:var(--muted2)}
+.progress-wrap{margin-top:1rem}
+.progress-meta{
+  display:flex;justify-content:space-between;
+  font-size:.6875rem;color:var(--muted);margin-bottom:.4375rem;
+}
+.progress-track{
+  height:4px;background:var(--border2);border-radius:9999px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;border-radius:9999px;
+  position:relative;overflow:hidden;
+}
+.progress-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.25) 50%,transparent 100%);
+  animation:shimmer 2s ease infinite;
+  background-size:400px 100%;
+}
+.dcard-footer{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:1rem;padding-top:1rem;
+  border-top:1px solid var(--border);font-size:.75rem;
+}
+.dcard-location{
+  display:flex;align-items:center;gap:.3125rem;color:var(--muted);
+}
+.dcard-location svg{width:.75rem;height:.75rem;stroke:currentColor;fill:none;stroke-width:2}
+.dcard-eta{font-size:.75rem;font-weight:600}
 
-    /* ── Footer ── */
-    footer { border-top: 1px solid var(--dark-700); padding: 2rem 1.5rem; text-align: center; color: var(--dark-500); font-size: 0.875rem; }
+/* ─── DETAIL PANEL ─── */
+.detail-split{
+  display:grid;grid-template-columns:1fr 22rem;gap:1.25rem;
+}
+.glass-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:1.5rem;
+}
+.panel-label{
+  font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted2);margin-bottom:1rem;
+}
+/* timeline */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:1rem;padding:.875rem 0}
+.tl-item:not(:last-child){border-bottom:1px solid var(--border)}
+.tl-axis{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:.1875rem}
+.tl-node{
+  width:1.75rem;height:1.75rem;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.tl-node svg{width:.875rem;height:.875rem;stroke:white;fill:none;stroke-width:2.5}
+.tl-stem{width:1px;flex:1;background:var(--border);margin-top:.25rem}
+.tl-content{padding-top:.1875rem}
+.tl-status{font-size:.875rem;font-weight:600;color:white;margin-bottom:.125rem}
+.tl-loc{font-size:.8125rem;color:var(--muted2)}
+.tl-time{font-size:.75rem;color:var(--muted);margin-top:.125rem}
+/* info rows */
+.info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.8125rem;padding:.5rem 0;border-bottom:1px solid var(--border);
+}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--muted)}
+.info-val{color:var(--text);font-weight:500}
 
-    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
-  </style>
+/* ─── MAP ─── */
+.map-wrap{
+  position:relative;border:1px solid var(--border);border-radius:var(--r-xl);
+  overflow:hidden;height:500px;
+}
+#live-map{width:100%;height:100%}
+.leaflet-container{background:#07111e!important}
+.leaflet-tile-pane{filter:brightness(.45) saturate(.55) hue-rotate(195deg)}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--muted2)!important;border-color:var(--border)!important}
+.leaflet-control-zoom a:hover{background:var(--surface2)!important;color:white!important}
+.leaflet-control-attribution{background:rgba(6,9,18,.75)!important;color:#3d5a80!important;font-size:.5625rem!important}
+.leaflet-control-attribution a{color:var(--muted)!important}
+.leaflet-popup-content-wrapper{background:var(--surface)!important;color:var(--text)!important;border:1px solid var(--border2)!important;border-radius:.625rem!important;box-shadow:0 12px 40px -8px rgba(0,0,0,.7)!important}
+.leaflet-popup-tip{background:var(--surface)!important}
+.leaflet-popup-content{margin:.75rem!important;font-size:.8125rem!important}
+.map-hud{
+  position:absolute;top:1rem;left:1rem;z-index:500;
+  display:flex;flex-direction:column;gap:.375rem;pointer-events:none;
+}
+.hud-chip{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:rgba(6,9,18,.88);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(99,102,241,.2);
+  border-radius:.5rem;padding:.4375rem .75rem;
+  font-size:.75rem;font-weight:500;color:var(--text);
+}
+.hud-chip svg{width:.875rem;height:.875rem;stroke:currentColor;fill:none;stroke-width:2}
+.map-controls{
+  position:absolute;top:1rem;right:1rem;z-index:500;
+  display:flex;flex-direction:column;gap:.375rem;
+}
+.map-ctrl-btn{
+  display:flex;align-items:center;gap:.375rem;
+  background:rgba(6,9,18,.88);backdrop-filter:blur(12px);
+  border:1px solid var(--border2);border-radius:.5rem;
+  padding:.4375rem .625rem;font-size:.75rem;font-weight:500;
+  color:var(--muted2);cursor:pointer;transition:all .15s;
+}
+.map-ctrl-btn:hover{border-color:var(--indigo);color:var(--indigo-l)}
+.map-ctrl-btn svg{width:.75rem;height:.75rem;stroke:currentColor;fill:none;stroke-width:2}
+.map-legend{
+  display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1rem;
+}
+.legend-item{
+  display:flex;align-items:center;gap:.375rem;
+  font-size:.75rem;color:var(--muted2);
+}
+.legend-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+
+/* ─── NOTIFICATION TOAST ─── */
+.toast-demo{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;
+  display:flex;flex-direction:column;gap:.5rem;
+  pointer-events:none;
+}
+.toast{
+  display:flex;align-items:center;gap:.75rem;
+  background:var(--surface2);
+  border:1px solid var(--border2);border-radius:.75rem;
+  padding:.75rem 1rem;
+  box-shadow:0 8px 32px -4px rgba(0,0,0,.6);
+  pointer-events:auto;
+  animation:fade-up .4s ease both;
+  max-width:18rem;
+}
+.toast-icon{
+  width:2rem;height:2rem;border-radius:.5rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.toast-icon svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2}
+.toast-body{flex:1}
+.toast-title{font-size:.8125rem;font-weight:600;color:white}
+.toast-msg{font-size:.75rem;color:var(--muted);margin-top:.0625rem}
+.toast-time{font-size:.625rem;color:var(--muted);white-space:nowrap;align-self:flex-start;padding-top:.125rem}
+
+/* ─── CTA ─── */
+.cta-section{
+  position:relative;
+  background:linear-gradient(135deg,rgba(99,102,241,.06) 0%,rgba(139,92,246,.06) 100%);
+  border:1px solid rgba(99,102,241,.12);
+  border-radius:var(--r-xl);overflow:hidden;
+  padding:4rem 2rem;text-align:center;
+}
+.cta-section::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 20% 50%,rgba(99,102,241,.12) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 50%,rgba(139,92,246,.1) 0%,transparent 60%);
+}
+.cta-section h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(1.75rem,4vw,2.5rem);font-weight:800;
+  letter-spacing:-.04em;color:white;margin-bottom:.875rem;
+}
+.cta-section p{font-size:1.0625rem;color:var(--muted2);max-width:28rem;margin:0 auto 2.5rem}
+.cta-btns{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.btn-lg{
+  font-size:.9375rem;font-weight:600;
+  padding:.8125rem 1.75rem;border-radius:.625rem;cursor:pointer;border:none;
+  transition:all .2s;display:flex;align-items:center;gap:.5rem;
+}
+.btn-lg svg{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2}
+.btn-lg.primary{
+  background:linear-gradient(135deg,var(--indigo),var(--violet));color:white;
+}
+.btn-lg.primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px -8px rgba(99,102,241,.5)}
+.btn-lg.outline{
+  background:transparent;color:var(--muted2);
+  border:1px solid var(--border2);
+}
+.btn-lg.outline:hover{color:white;border-color:var(--muted)}
+.cta-social-proof{
+  display:flex;align-items:center;justify-content:center;
+  gap:1.5rem;margin-top:2rem;font-size:.8125rem;color:var(--muted);
+  flex-wrap:wrap;
+}
+.proof-item{display:flex;align-items:center;gap:.375rem}
+.proof-item svg{width:.875rem;height:.875rem;stroke:var(--delivered);fill:none;stroke-width:2}
+
+/* ─── FOOTER ─── */
+footer{
+  border-top:1px solid var(--border);
+  padding:2.5rem 1.5rem;text-align:center;
+  font-size:.8125rem;color:var(--muted);
+}
+footer .ft-logo{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:1rem;font-weight:800;letter-spacing:-.03em;
+  color:white;margin-bottom:.5rem;
+  display:flex;align-items:center;justify-content:center;gap:.25rem;
+}
+.ft-logo span{color:var(--indigo-l)}
+footer p{margin-top:.375rem}
+
+/* ─── SCROLL-IN OBSERVER ─── */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+</style>
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="navbar-inner">
+<!-- Aurora background -->
+<div class="aurora-bg" aria-hidden="true">
+  <div class="aurora-orb"></div>
+  <div class="aurora-orb"></div>
+  <div class="aurora-orb"></div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="nav-inner">
     <div class="logo">
-      <div class="logo-box">
-        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       </div>
-      <span class="logo-text">Track<span>All</span></span>
+      <span class="logo-text">TrackAll<span class="logo-dot">.</span></span>
     </div>
-    <div class="nav-links">
-      <a href="#dashboard" class="nav-link active">
-        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-        My Deliveries
+
+    <div class="nav-pill">
+      <a href="#dashboard" class="on">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
       </a>
-      <a href="#map" class="nav-link">
-        <svg viewBox="0 0 24 24" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <a href="#map">
+        <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
         Live Map
       </a>
-      <a href="#search" class="nav-link">
-        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Search
-      </a>
-      <a href="#" class="nav-link">
-        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        Notifications
+      <a href="#search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Track
       </a>
     </div>
-    <a href="#" class="sign-in">
-      <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor" style="width:1rem;height:1rem"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-      Sign In
-    </a>
+
+    <div class="nav-right">
+      <div class="nav-notif" title="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-badge">3</span>
+      </div>
+      <button class="btn-ghost">Sign in</button>
+      <button class="btn-accent">Get started free</button>
+    </div>
   </div>
 </nav>
 
-<!-- SCREEN 1: HOME -->
-<section id="home" class="hero">
-  <div class="hero-badge">
-    <span class="badge-dot"></span>
-    Real-time tracking · 12+ couriers · India-wide
+<!-- ══ HERO ══ -->
+<section class="hero" id="search">
+  <div class="hero-kicker">
+    <span class="hero-kicker-dot"></span>
+    Real-time &nbsp;·&nbsp; 12+ couriers &nbsp;·&nbsp; India-wide
   </div>
-  <h1>Track Every Delivery,<br><span class="gradient-text">All in One Place</span></h1>
-  <p>India's most comprehensive delivery tracker. Enter any tracking number and instantly see live status, location on map, and get alerts — no app required.</p>
-  <div class="search-box">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="width:1.25rem;height:1.25rem;flex-shrink:0;margin-left:0.5rem">
-      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-    </svg>
-    <input type="text" placeholder="Enter tracking number — any courier…" />
-    <button class="btn-primary">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:1rem;height:1rem"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      Track
-    </button>
+
+  <h1>One search.<br><span class="word-gradient">Every delivery.</span></h1>
+
+  <p class="hero-sub">
+    Paste any tracking number from Delhivery, BlueDart, Ekart, or Amazon — TrackAll auto-detects the courier and shows you everything.
+  </p>
+
+  <div class="search-wrap">
+    <div class="search-row">
+      <div class="search-row-left">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Paste any tracking number, e.g. DEL7429287160…" id="main-search"/>
+      </div>
+      <div class="search-divider"></div>
+      <button class="courier-select" title="Auto-detect courier">
+        Auto-detect
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="search-btn">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Track
+      </button>
+    </div>
+
+    <div class="search-hints">
+      <span class="hint-chip">DEL7429287160</span>
+      <span class="hint-chip">BD12345678901</span>
+      <span class="hint-chip">EE123456789IN</span>
+    </div>
   </div>
-  <p class="hero-hint">Or <a href="#">create a free account</a> to save and manage all your deliveries</p>
+
+  <div class="hero-trust">
+    <div class="hero-trust-ava">
+      <span style="background:#6366f1">AS</span>
+      <span style="background:#8b5cf6">RK</span>
+      <span style="background:#06b6d4">PM</span>
+      <span style="background:#22c55e">NV</span>
+    </div>
+    <span>Trusted by <strong style="color:var(--muted2)">24,000+</strong> users across India</span>
+  </div>
 </section>
 
-<!-- Courier strip -->
-<div class="courier-strip">
-  <p class="courier-label">Supported Couriers</p>
-  <div class="courier-chips">
-    <span class="chip">Delhivery</span><span class="chip">BlueDart</span><span class="chip">DTDC</span>
-    <span class="chip">Ekart</span><span class="chip">India Post</span><span class="chip">XpressBees</span>
-    <span class="chip">Shadowfax</span><span class="chip">Amazon Logistics</span><span class="chip">Ecom Express</span>
-    <span class="chip">Shiprocket</span><span class="chip">Swiggy</span><span class="chip">Zomato</span>
+<!-- courier belt -->
+<div class="belt">
+  <div class="belt-fade-l"></div>
+  <div class="belt-fade-r"></div>
+  <div class="belt-track">
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Delhivery</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>BlueDart</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>DTDC</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Ekart</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>India Post</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>XpressBees</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Shadowfax</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Amazon Logistics</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Ecom Express</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Shiprocket</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Swiggy Instamart</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Zomato Hyperpure</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Borzo</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Porter</span>
+    <!-- duplicate for loop -->
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Delhivery</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>BlueDart</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>DTDC</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Ekart</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>India Post</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>XpressBees</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Shadowfax</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Amazon Logistics</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Ecom Express</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Shiprocket</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Swiggy Instamart</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Zomato Hyperpure</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Borzo</span>
+    <span class="belt-chip"><span class="belt-chip-dot"></span>Porter</span>
   </div>
 </div>
 
-<!-- Features -->
-<div class="features">
-  <p class="section-title">Everything you need to stay on top of deliveries</p>
-  <p class="section-sub">Built specifically for Indian consumers and businesses, with all the features you need in a clean, fast interface.</p>
-  <div class="feature-grid">
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(99,102,241,0.1)">
-        <svg viewBox="0 0 24 24" stroke="#818cf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      </div>
-      <h3>12+ Courier Partners</h3>
-      <p>Delhivery, BlueDart, DTDC, Ekart, India Post, XpressBees and more in one dashboard.</p>
+<!-- ══ FEATURES ══ -->
+<div class="section reveal">
+  <div class="section-inner">
+    <div class="section-tag">
+      <svg viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5"/></svg>
+      Platform features
     </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(234,179,8,0.1)">
-        <svg viewBox="0 0 24 24" stroke="#facc15" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      </div>
-      <h3>Real-Time Updates</h3>
-      <p>Live WebSocket updates so you know the moment your package moves.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(34,197,94,0.1)">
-        <svg viewBox="0 0 24 24" stroke="#4ade80" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      </div>
-      <h3>Live Map View</h3>
-      <p>Visualise your package journey on an interactive map of India with real-time movement.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(168,85,247,0.1)">
-        <svg viewBox="0 0 24 24" stroke="#c084fc" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </div>
-      <h3>Smart Notifications</h3>
-      <p>Push, SMS and email alerts for every status change, delay, and delivery.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(249,115,22,0.1)">
-        <svg viewBox="0 0 24 24" stroke="#fb923c" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
-      <h3>Universal Search</h3>
-      <p>Search across all couriers with a single tracking number or phone number.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon" style="background:rgba(239,68,68,0.1)">
-        <svg viewBox="0 0 24 24" stroke="#f87171" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <h3>Secure &amp; Private</h3>
-      <p>Your data is encrypted. Phone-based OTP login, JWT auth, rate limiting.</p>
-    </div>
-  </div>
-</div>
+    <h2 class="section-heading">Everything tracking should be</h2>
+    <p class="section-sub" style="margin-bottom:2rem">Built for Indian logistics — from hyper-local Shadowfax runs to cross-country BlueDart shipments.</p>
 
-<div class="divider"></div>
-
-<!-- SCREEN 2: DASHBOARD -->
-<div class="dashboard" id="dashboard">
-  <div class="screen-label">
-    <span class="badge-num">Screen 2</span>
-    <h2>My Deliveries Dashboard</h2>
-  </div>
-
-  <div class="dash-header">
-    <div>
-      <div class="dash-title">My Deliveries</div>
-      <div class="dash-sub">8 shipments · 5 active</div>
-    </div>
-    <div style="display:flex;gap:0.5rem">
-      <button class="btn-secondary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:1rem;height:1rem"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      </button>
-      <button class="btn-primary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:1rem;height:1rem"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add Shipment
-      </button>
-    </div>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-val" style="color:white">8</div><div class="stat-label">Total</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#818cf8">5</div><div class="stat-label">Active</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#fb923c">2</div><div class="stat-label">Out for Delivery</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#f87171">1</div><div class="stat-label">Delayed</div></div>
-  </div>
-
-  <div class="filter-tabs">
-    <div class="tab active">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:0.875rem;height:0.875rem"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-      All <span class="tab-count">8</span>
-    </div>
-    <div class="tab">🚚 In Transit <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">3</span></div>
-    <div class="tab">🛵 Out for Delivery <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">2</span></div>
-    <div class="tab">✅ Delivered <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">2</span></div>
-    <div class="tab">⚠️ Delayed <span style="font-size:0.75rem;background:var(--dark-700);color:var(--dark-400);padding:2px 6px;border-radius:4px">1</span></div>
-  </div>
-
-  <div class="delivery-grid">
-    <!-- Card 1 -->
-    <div class="delivery-card">
-      <div class="card-top">
-        <span class="courier-badge" style="background:rgba(212,45,39,0.15);color:#D42D27">Delhivery</span>
-        <span class="status-badge" style="background:rgba(249,115,22,0.15);color:#fb923c;border-color:rgba(249,115,22,0.3)">
-          <span style="width:6px;height:6px;background:#fb923c;border-radius:50%;display:inline-block"></span>
-          Out for Delivery
-        </span>
+    <div class="feat-grid">
+      <div class="feat" style="--feat-bg:rgba(99,102,241,.1);--feat-border:rgba(99,102,241,.2);--feat-glow:rgba(99,102,241,.12)">
+        <div class="feat-icon-wrap">🗺️</div>
+        <h3>Live map view</h3>
+        <p>Every active shipment pinned on a real Leaflet + OpenStreetMap map, colour-coded by status.</p>
       </div>
-      <div class="tracking-num">DEL7429287160</div>
-      <div class="product-name">OnePlus 12 5G Smartphone</div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Out for Delivery</span><span>85%</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+      <div class="feat" style="--feat-bg:rgba(249,115,22,.1);--feat-border:rgba(249,115,22,.2);--feat-glow:rgba(249,115,22,.1)">
+        <div class="feat-icon-wrap" style="background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.2)">⚡</div>
+        <h3>Real-time pushes</h3>
+        <p>WebSocket updates the instant couriers scan your package — no refresh, no polling.</p>
       </div>
-      <div class="card-footer">
-        <span class="location">
-          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Mumbai, MH
-        </span>
-        <span class="eta">Arriving Today</span>
+      <div class="feat" style="--feat-bg:rgba(234,179,8,.1);--feat-border:rgba(234,179,8,.2);--feat-glow:rgba(234,179,8,.08)">
+        <div class="feat-icon-wrap" style="background:rgba(234,179,8,.1);border-color:rgba(234,179,8,.2)">🔔</div>
+        <h3>Smart alerts</h3>
+        <p>Push, SMS, and email when something moves, arrives, or gets delayed — your choice.</p>
       </div>
-    </div>
-
-    <!-- Card 2 -->
-    <div class="delivery-card">
-      <div class="card-top">
-        <span class="courier-badge" style="background:rgba(0,56,130,0.2);color:#4a90d9">BlueDart</span>
-        <span class="status-badge" style="background:rgba(234,179,8,0.15);color:#facc15;border-color:rgba(234,179,8,0.3)">
-          <span style="width:6px;height:6px;background:#facc15;border-radius:50%;display:inline-block"></span>
-          In Transit
-        </span>
+      <div class="feat" style="--feat-bg:rgba(34,197,94,.1);--feat-border:rgba(34,197,94,.2);--feat-glow:rgba(34,197,94,.08)">
+        <div class="feat-icon-wrap" style="background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.2)">🔍</div>
+        <h3>Auto-detect courier</h3>
+        <p>Paste any tracking number — TrackAll figures out the carrier automatically, every time.</p>
       </div>
-      <div class="tracking-num">BD12345678901</div>
-      <div class="product-name">Nike Air Max 270 — Size 9</div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>In Transit</span><span>60%</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+      <div class="feat" style="--feat-bg:rgba(139,92,246,.1);--feat-border:rgba(139,92,246,.2);--feat-glow:rgba(139,92,246,.1)">
+        <div class="feat-icon-wrap" style="background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2)">📦</div>
+        <h3>Full history</h3>
+        <p>Timeline, scan events, and proof of delivery for every package, searchable by order ID.</p>
       </div>
-      <div class="card-footer">
-        <span class="location">
-          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Pune, MH
-        </span>
-        <span style="font-size:0.75rem;color:#facc15;font-weight:500">Tomorrow, 2–6 PM</span>
-      </div>
-    </div>
-
-    <!-- Card 3 -->
-    <div class="delivery-card">
-      <div class="card-top">
-        <span class="courier-badge" style="background:rgba(249,168,37,0.15);color:#F9A825">Ekart</span>
-        <span class="status-badge" style="background:rgba(239,68,68,0.15);color:#f87171;border-color:rgba(239,68,68,0.3)">
-          <span style="width:6px;height:6px;background:#f87171;border-radius:50%;display:inline-block"></span>
-          Delayed
-        </span>
-      </div>
-      <div class="tracking-num">EKT9988776655</div>
-      <div class="product-name">Samsung Galaxy Watch 6</div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Delayed</span><span>55%</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:55%;background:linear-gradient(90deg,#dc2626,#f87171)"></div></div>
-      </div>
-      <div class="card-footer">
-        <span class="location">
-          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Bengaluru, KA
-        </span>
-        <span style="font-size:0.75rem;color:#f87171;font-weight:500">Delayed 2 days</span>
-      </div>
-    </div>
-
-    <!-- Card 4 -->
-    <div class="delivery-card">
-      <div class="card-top">
-        <span class="courier-badge" style="background:rgba(255,107,0,0.15);color:#FF6B00">XpressBees</span>
-        <span class="status-badge" style="background:rgba(34,197,94,0.15);color:#4ade80;border-color:rgba(34,197,94,0.3)">
-          <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>
-          Delivered
-        </span>
-      </div>
-      <div class="tracking-num">XB55443322110</div>
-      <div class="product-name">Lakme Absolute Lipstick Set</div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Delivered</span><span>100%</span></div>
-        <div class="progress-bar"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div>
-      </div>
-      <div class="card-footer">
-        <span class="location">
-          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Delhi, DL
-        </span>
-        <span style="font-size:0.75rem;color:#4ade80;font-weight:500">Delivered ✓</span>
+      <div class="feat" style="--feat-bg:rgba(6,182,212,.1);--feat-border:rgba(6,182,212,.2);--feat-glow:rgba(6,182,212,.08)">
+        <div class="feat-icon-wrap" style="background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.2)">🔒</div>
+        <h3>Private by default</h3>
+        <p>OTP login, row-level encryption. Your tracking data is yours — never shared.</p>
       </div>
     </div>
   </div>
@@ -406,100 +830,559 @@
 
 <div class="divider"></div>
 
-<!-- SCREEN 3: GLOBAL MAP -->
-<div class="map-section" id="map">
-  <div class="screen-label">
-    <span class="badge-num">Screen 3</span>
-    <h2>Global Live Map — All Packages</h2>
-  </div>
+<!-- ══ DASHBOARD ══ -->
+<div class="section reveal" id="dashboard">
+  <div class="section-inner">
+    <div class="section-tag">
+      <svg viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5"/></svg>
+      Screen 1 — Dashboard
+    </div>
+    <h2 class="section-heading">My Deliveries</h2>
+    <p class="section-sub" style="margin-bottom:2rem">8 shipments · 5 active right now · updated 12s ago</p>
 
-  <div class="map-container">
-    <div class="map-bg"></div>
-    <div class="map-grid"></div>
-
-    <!-- HUD cards -->
-    <div class="map-hud">
-      <div class="hud-card">
-        <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-        8 active packages
+    <!-- Stat cards -->
+    <div class="stats-bento">
+      <div class="stat-card" style="--stat-glow:rgba(255,255,255,.08);--stat-color:var(--border2)">
+        <div class="stat-icon" style="background:rgba(255,255,255,.05);color:var(--muted2)">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+        </div>
+        <div class="stat-num" style="color:white">8</div>
+        <div class="stat-label">Total shipments</div>
+        <div class="stat-delta" style="color:var(--delivered)">
+          <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+          +2 this week
+        </div>
       </div>
-      <div class="hud-card">
-        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        <span style="color:#fb923c">2 out for delivery</span>
+      <div class="stat-card" style="--stat-glow:rgba(99,102,241,.3);--stat-color:rgba(99,102,241,.3)">
+        <div class="stat-icon" style="background:rgba(99,102,241,.12);color:var(--indigo-l)">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="stat-num" style="color:var(--indigo-l)">5</div>
+        <div class="stat-label">Active</div>
+        <div class="stat-delta" style="color:var(--indigo-l)">
+          <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+          Moving
+        </div>
       </div>
-      <div class="hud-card" style="font-size:0.6875rem">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Refreshing in 47s
+      <div class="stat-card" style="--stat-glow:rgba(249,115,22,.3);--stat-color:rgba(249,115,22,.3)">
+        <div class="stat-icon" style="background:rgba(249,115,22,.12);color:var(--ofd)">
+          <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <div class="stat-num" style="color:var(--ofd)">2</div>
+        <div class="stat-label">Out for Delivery</div>
+        <div class="stat-delta" style="color:var(--ofd)">Arriving today</div>
+      </div>
+      <div class="stat-card" style="--stat-glow:rgba(239,68,68,.25);--stat-color:rgba(239,68,68,.25)">
+        <div class="stat-icon" style="background:rgba(239,68,68,.1);color:var(--delayed)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="stat-num" style="color:var(--delayed)">1</div>
+        <div class="stat-label">Delayed</div>
+        <div class="stat-delta" style="color:var(--delayed)">Needs attention</div>
       </div>
     </div>
 
-    <!-- Animated pins -->
-    <div class="map-pins">
-      <div class="pin" style="left:38%;top:25%">
-        <div class="pin-dot" style="background:#fb923c"></div>
-        <div class="pin-label">Delhivery · OFD</div>
-      </div>
-      <div class="pin" style="left:27%;top:42%">
-        <div class="pin-dot" style="background:#facc15"></div>
-        <div class="pin-label">BlueDart · Transit</div>
-      </div>
-      <div class="pin" style="left:55%;top:55%">
-        <div class="pin-dot" style="background:#f87171"></div>
-        <div class="pin-label">Ekart · Delayed</div>
-      </div>
-      <div class="pin" style="left:48%;top:35%">
-        <div class="pin-dot" style="background:#4ade80"></div>
-        <div class="pin-label">XpressBees · Delivered</div>
-      </div>
-      <div class="pin" style="left:63%;top:30%">
-        <div class="pin-dot" style="background:#818cf8"></div>
-        <div class="pin-label">India Post · Shipped</div>
-      </div>
-      <div class="pin" style="left:22%;top:60%">
-        <div class="pin-dot" style="background:#fb923c;animation:pulse 1.5s infinite"></div>
-        <div class="pin-label">Shadowfax · OFD</div>
-      </div>
+    <!-- Filter tabs -->
+    <div class="tabs-row" id="tabs">
+      <button class="tab-btn active" onclick="filterCards(this,'all')">All <span class="tab-n">8</span></button>
+      <button class="tab-btn" onclick="filterCards(this,'transit')">In Transit <span class="tab-n">3</span></button>
+      <button class="tab-btn" onclick="filterCards(this,'ofd')">Out for Delivery <span class="tab-n">2</span></button>
+      <button class="tab-btn" onclick="filterCards(this,'delivered')">Delivered <span class="tab-n">2</span></button>
+      <button class="tab-btn" onclick="filterCards(this,'delayed')">Delayed <span class="tab-n">1</span></button>
     </div>
 
-    <!-- Center label -->
-    <div class="map-label">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.5" style="width:3rem;height:3rem;margin:0 auto"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-      <p>Interactive Leaflet map · real-time package locations across India</p>
-    </div>
-  </div>
+    <!-- Cards -->
+    <div class="cards-grid" id="cards-grid">
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem;margin-top:1rem">
-    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#fb923c;flex-shrink:0"></span> Out for Delivery</div>
-    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#facc15;flex-shrink:0"></span> In Transit</div>
-    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#f87171;flex-shrink:0"></span> Delayed</div>
-    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#4ade80;flex-shrink:0"></span> Delivered</div>
-    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#818cf8;flex-shrink:0"></span> Shipped</div>
-    <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--dark-400)"><span style="width:10px;height:10px;border-radius:50%;background:#94a3b8;flex-shrink:0"></span> Order Placed</div>
+      <!-- 1 Delhivery OFD -->
+      <div class="dcard" data-status="ofd" style="--dcard-accent:var(--ofd)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(212,45,39,.1);color:#e05252">Delhivery</span>
+          <span class="status-badge" style="background:rgba(249,115,22,.08);color:var(--ofd);border-color:rgba(249,115,22,.25)">
+            <span class="status-dot live" style="background:var(--ofd)"></span>Out for Delivery
+          </span>
+        </div>
+        <div class="dcard-num">DEL7429287160</div>
+        <div class="dcard-product">OnePlus 12 5G Smartphone</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>Out for delivery</span><span style="color:var(--ofd);font-weight:600">85%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:85%;background:linear-gradient(90deg,#ea580c,#f97316)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Mumbai, MH
+          </span>
+          <span class="dcard-eta" style="color:var(--ofd)">Arriving today</span>
+        </div>
+      </div>
+
+      <!-- 2 BlueDart Transit -->
+      <div class="dcard" data-status="transit" style="--dcard-accent:var(--transit)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(0,56,130,.18);color:#5b9bd5">BlueDart</span>
+          <span class="status-badge" style="background:rgba(234,179,8,.08);color:var(--transit);border-color:rgba(234,179,8,.25)">
+            <span class="status-dot" style="background:var(--transit)"></span>In Transit
+          </span>
+        </div>
+        <div class="dcard-num">BD12345678901</div>
+        <div class="dcard-product">Nike Air Max 270 — Size 9</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>In transit</span><span style="color:var(--transit);font-weight:600">60%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:60%;background:linear-gradient(90deg,#ca8a04,#eab308)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Pune, MH
+          </span>
+          <span class="dcard-eta" style="color:var(--transit)">Tomorrow 2–6 PM</span>
+        </div>
+      </div>
+
+      <!-- 3 Ekart Delayed -->
+      <div class="dcard" data-status="delayed" style="--dcard-accent:var(--delayed);border-color:rgba(239,68,68,.18)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(249,168,37,.1);color:#f59e0b">Ekart</span>
+          <span class="status-badge" style="background:rgba(239,68,68,.08);color:var(--delayed);border-color:rgba(239,68,68,.25)">
+            <span class="status-dot" style="background:var(--delayed)"></span>Delayed
+          </span>
+        </div>
+        <div class="dcard-num">EKT9988776655</div>
+        <div class="dcard-product">Samsung Galaxy Watch 6</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>Delayed</span><span style="color:var(--delayed);font-weight:600">55%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:55%;background:linear-gradient(90deg,#b91c1c,#ef4444)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Bengaluru, KA
+          </span>
+          <span class="dcard-eta" style="color:var(--delayed)">⚠ Delayed 2 days</span>
+        </div>
+      </div>
+
+      <!-- 4 XpressBees Delivered -->
+      <div class="dcard" data-status="delivered" style="--dcard-accent:var(--delivered)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(255,107,0,.1);color:#fb923c">XpressBees</span>
+          <span class="status-badge" style="background:rgba(34,197,94,.08);color:var(--delivered);border-color:rgba(34,197,94,.25)">
+            <span class="status-dot" style="background:var(--delivered)"></span>Delivered
+          </span>
+        </div>
+        <div class="dcard-num">XB55443322110</div>
+        <div class="dcard-product">Lakme Absolute Lipstick Set</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>Delivered</span><span style="color:var(--delivered);font-weight:600">100%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,#15803d,#22c55e)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Delhi, DL
+          </span>
+          <span class="dcard-eta" style="color:var(--delivered)">Delivered ✓</span>
+        </div>
+      </div>
+
+      <!-- 5 India Post Shipped -->
+      <div class="dcard" data-status="transit" style="--dcard-accent:var(--shipped)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(99,102,241,.1);color:var(--indigo-l)">India Post</span>
+          <span class="status-badge" style="background:rgba(99,102,241,.08);color:var(--indigo-l);border-color:rgba(99,102,241,.25)">
+            <span class="status-dot" style="background:var(--indigo-l)"></span>Shipped
+          </span>
+        </div>
+        <div class="dcard-num">EE123456789IN</div>
+        <div class="dcard-product">Noise ColorFit Pro 5</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>Shipped</span><span style="color:var(--indigo-l);font-weight:600">40%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:40%;background:linear-gradient(90deg,#4338ca,#818cf8)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Chennai, TN
+          </span>
+          <span class="dcard-eta" style="color:var(--muted2)">Expected in 3–4 days</span>
+        </div>
+      </div>
+
+      <!-- 6 Shadowfax OFD -->
+      <div class="dcard" data-status="ofd" style="--dcard-accent:var(--ofd)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(234,179,8,.1);color:#ca8a04">Shadowfax</span>
+          <span class="status-badge" style="background:rgba(249,115,22,.08);color:var(--ofd);border-color:rgba(249,115,22,.25)">
+            <span class="status-dot live" style="background:var(--ofd)"></span>Out for Delivery
+          </span>
+        </div>
+        <div class="dcard-num">SFX88776655443</div>
+        <div class="dcard-product">Boat Airdopes 141</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>Out for delivery</span><span style="color:var(--ofd);font-weight:600">90%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:90%;background:linear-gradient(90deg,#ea580c,#f97316)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Hyderabad, TS
+          </span>
+          <span class="dcard-eta" style="color:var(--ofd)">By 8 PM today</span>
+        </div>
+      </div>
+
+      <!-- 7 DTDC Transit -->
+      <div class="dcard" data-status="transit" style="--dcard-accent:var(--transit)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(234,179,8,.1);color:#ca8a04">DTDC</span>
+          <span class="status-badge" style="background:rgba(234,179,8,.08);color:var(--transit);border-color:rgba(234,179,8,.25)">
+            <span class="status-dot" style="background:var(--transit)"></span>In Transit
+          </span>
+        </div>
+        <div class="dcard-num">DTDC67543219080</div>
+        <div class="dcard-product">Levi's 511 Slim Jeans</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>In transit</span><span style="color:var(--transit);font-weight:600">70%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:70%;background:linear-gradient(90deg,#ca8a04,#eab308)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Ahmedabad, GJ
+          </span>
+          <span class="dcard-eta" style="color:var(--transit)">Tomorrow by noon</span>
+        </div>
+      </div>
+
+      <!-- 8 Ecom Express Delivered -->
+      <div class="dcard" data-status="delivered" style="--dcard-accent:var(--delivered)">
+        <div class="dcard-top">
+          <span class="courier-badge" style="background:rgba(34,197,94,.1);color:#16a34a">Ecom Express</span>
+          <span class="status-badge" style="background:rgba(34,197,94,.08);color:var(--delivered);border-color:rgba(34,197,94,.25)">
+            <span class="status-dot" style="background:var(--delivered)"></span>Delivered
+          </span>
+        </div>
+        <div class="dcard-num">EXP34512986700</div>
+        <div class="dcard-product">Philips Hair Dryer HP8112</div>
+        <div class="progress-wrap">
+          <div class="progress-meta"><span>Delivered</span><span style="color:var(--delivered);font-weight:600">100%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,#15803d,#22c55e)"></div></div>
+        </div>
+        <div class="dcard-footer">
+          <span class="dcard-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Kolkata, WB
+          </span>
+          <span class="dcard-eta" style="color:var(--delivered)">Delivered ✓</span>
+        </div>
+      </div>
+
+    </div><!-- /cards-grid -->
   </div>
 </div>
 
 <div class="divider"></div>
 
-<!-- CTA -->
-<div class="cta-section">
-  <div class="cta-box">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.5" style="width:3rem;height:3rem;margin:0 auto 1rem"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-    <h2>Start tracking for free</h2>
-    <p>Sign up with your phone number and track unlimited shipments from all your favourite shopping apps.</p>
-    <div class="cta-btns">
-      <button class="btn-primary" style="font-size:0.9375rem;padding:0.75rem 1.5rem">
-        Get Started Free
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="width:1rem;height:1rem"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-      <button class="btn-secondary" style="font-size:0.9375rem;padding:0.75rem 1.5rem">View Demo Dashboard</button>
+<!-- ══ SHIPMENT DETAIL ══ -->
+<div class="section reveal">
+  <div class="section-inner">
+    <div class="section-tag">
+      <svg viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5"/></svg>
+      Screen 2 — Shipment Detail
+    </div>
+    <h2 class="section-heading">Shipment Detail — DEL7429287160</h2>
+    <p class="section-sub" style="margin-bottom:2rem">OnePlus 12 5G &nbsp;·&nbsp; Delhivery &nbsp;·&nbsp; <span style="color:var(--ofd);font-weight:600">Out for Delivery</span></p>
+
+    <div class="detail-split">
+      <!-- Timeline -->
+      <div class="glass-card">
+        <div class="panel-label">Tracking Timeline</div>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-axis">
+              <div class="tl-node" style="background:rgba(249,115,22,.15)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--ofd)"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
+              <div class="tl-stem"></div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-status">Out for Delivery</div>
+              <div class="tl-loc">Mumbai Delivery Hub, Andheri East</div>
+              <div class="tl-time">Today, 8:42 AM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-axis">
+              <div class="tl-node" style="background:rgba(234,179,8,.12)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--transit)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div class="tl-stem"></div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-status">Arrived at Delivery Hub</div>
+              <div class="tl-loc">Mumbai Hub, Maharashtra</div>
+              <div class="tl-time">Yesterday, 11:15 PM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-axis">
+              <div class="tl-node" style="background:rgba(234,179,8,.12)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--transit)"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+              </div>
+              <div class="tl-stem"></div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-status">In Transit</div>
+              <div class="tl-loc">Pune Gateway, Maharashtra</div>
+              <div class="tl-time">Yesterday, 3:30 PM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-axis">
+              <div class="tl-node" style="background:rgba(99,102,241,.12)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--indigo-l)"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              </div>
+              <div class="tl-stem"></div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-status">Picked Up</div>
+              <div class="tl-loc">Bengaluru Origin Hub, KA</div>
+              <div class="tl-time">2 days ago, 9:00 AM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-axis">
+              <div class="tl-node" style="background:rgba(100,116,139,.1)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--muted)"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-status" style="color:var(--muted)">Order Placed</div>
+              <div class="tl-loc">OnePlus Official Store</div>
+              <div class="tl-time">3 days ago, 2:10 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div style="display:flex;flex-direction:column;gap:.875rem">
+        <div class="glass-card">
+          <div class="panel-label">Package Info</div>
+          <div>
+            <div class="info-row"><span class="info-label">Courier</span><span class="info-val">Delhivery</span></div>
+            <div class="info-row"><span class="info-label">Tracking #</span><span class="info-val" style="color:var(--indigo-l);font-family:monospace">DEL7429287160</span></div>
+            <div class="info-row"><span class="info-label">Weight</span><span class="info-val">0.92 kg</span></div>
+            <div class="info-row"><span class="info-label">Dimensions</span><span class="info-val">28×18×7 cm</span></div>
+            <div class="info-row"><span class="info-label">ETA</span><span class="info-val" style="color:var(--ofd);font-weight:600">Today by 7 PM</span></div>
+          </div>
+        </div>
+        <div class="glass-card">
+          <div class="panel-label">Delivery Address</div>
+          <div style="font-size:.8125rem;color:var(--muted2);line-height:1.75">
+            Flat 4B, Sai Residency<br>
+            Andheri West, Mumbai<br>
+            Maharashtra — 400053
+          </div>
+        </div>
+        <button class="btn-accent" style="width:100%;padding:.6875rem;border-radius:var(--r-sm);font-size:.875rem;display:flex;align-items:center;justify-content:center;gap:.5rem">
+          <svg viewBox="0 0 24 24" style="width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Set delivery alert
+        </button>
+        <button class="btn-ghost" style="width:100%;padding:.6875rem;border-radius:var(--r-sm);font-size:.875rem">
+          View full history
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
+<div class="divider"></div>
+
+<!-- ══ LIVE MAP ══ -->
+<div class="section reveal" id="map">
+  <div class="section-inner">
+    <div class="section-tag">
+      <svg viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5"/></svg>
+      Screen 3 — Live Map
+    </div>
+    <h2 class="section-heading">Live Map — all active orders</h2>
+    <p class="section-sub" style="margin-bottom:1.5rem">Real coordinates across India, colour-coded by status. Click any pin for details.</p>
+
+    <div class="map-wrap">
+      <div id="live-map"></div>
+      <div class="map-hud">
+        <div class="hud-chip">
+          <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          6 active packages
+        </div>
+        <div class="hud-chip" style="color:var(--ofd)">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          2 out for delivery
+        </div>
+        <div class="hud-chip" style="color:var(--muted2)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Refreshing in 47s
+        </div>
+      </div>
+      <div class="map-controls">
+        <button class="map-ctrl-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          All couriers
+        </button>
+        <button class="map-ctrl-btn">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          Live only
+        </button>
+      </div>
+    </div>
+
+    <div class="map-legend">
+      <div class="legend-item"><span class="legend-dot" style="background:var(--ofd)"></span>Out for Delivery</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--transit)"></span>In Transit</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--delayed)"></span>Delayed</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--delivered)"></span>Delivered</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--shipped)"></span>Shipped</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ CTA ══ -->
+<div class="section reveal">
+  <div class="section-inner">
+    <div class="cta-section">
+      <h2>Start tracking, for free.</h2>
+      <p>Sign up with your phone number. No credit card, no nonsense — just your deliveries, beautifully organised.</p>
+      <div class="cta-btns">
+        <button class="btn-lg primary">
+          Get started free
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="btn-lg outline">View demo</button>
+      </div>
+      <div class="cta-social-proof">
+        <div class="proof-item">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          No credit card required
+        </div>
+        <div class="proof-item">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Free forever plan
+        </div>
+        <div class="proof-item">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          OTP login, no password
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
 <footer>
-  <p>TrackAll — Universal Delivery Tracker for India &nbsp;·&nbsp; Built with Next.js 15 + Express + PostgreSQL + Electron</p>
-  <p style="margin-top:0.5rem;font-size:0.75rem">Supports: Delhivery · BlueDart · DTDC · Ekart · India Post · XpressBees · Shadowfax · Shiprocket · Ecom Express</p>
+  <div class="container">
+    <div class="ft-logo">TrackAll<span>.</span></div>
+    <p>Universal Delivery Tracker for India — designed for speed, built for everyone.</p>
+    <p style="margin-top:.5rem;font-size:.75rem">
+      Delhivery &nbsp;·&nbsp; BlueDart &nbsp;·&nbsp; DTDC &nbsp;·&nbsp; Ekart &nbsp;·&nbsp; India Post &nbsp;·&nbsp; XpressBees &nbsp;·&nbsp; Shadowfax &nbsp;·&nbsp; Shiprocket &nbsp;·&nbsp; Ecom Express
+    </p>
+  </div>
 </footer>
 
+<!-- Toast notification (demo) -->
+<div class="toast-demo" id="toasts"></div>
+
+<!-- ══ SCRIPTS ══ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ── Leaflet map ── */
+const map = L.map('live-map', {center:[20.5937,78.9629],zoom:5,zoomControl:true});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:19
+}).addTo(map);
+
+const orders=[
+  {lat:19.0760,lng:72.8777,courier:'Delhivery',tracking:'DEL7429287160',product:'OnePlus 12 5G',status:'Out for Delivery',color:'#f97316',city:'Mumbai, MH',eta:'Arriving today'},
+  {lat:18.5204,lng:73.8567,courier:'BlueDart',tracking:'BD12345678901',product:'Nike Air Max 270',status:'In Transit',color:'#eab308',city:'Pune, MH',eta:'Tomorrow 2–6 PM'},
+  {lat:12.9716,lng:77.5946,courier:'Ekart',tracking:'EKT9988776655',product:'Samsung Galaxy Watch 6',status:'Delayed',color:'#ef4444',city:'Bengaluru, KA',eta:'Delayed 2 days'},
+  {lat:28.6139,lng:77.2090,courier:'XpressBees',tracking:'XB55443322110',product:'Lakme Lipstick Set',status:'Delivered',color:'#22c55e',city:'Delhi, DL',eta:'Delivered ✓'},
+  {lat:13.0827,lng:80.2707,courier:'India Post',tracking:'EE123456789IN',product:'Noise ColorFit Pro 5',status:'Shipped',color:'#818cf8',city:'Chennai, TN',eta:'In 3–4 days'},
+  {lat:17.3850,lng:78.4867,courier:'Shadowfax',tracking:'SFX88776655443',product:'Boat Airdopes 141',status:'Out for Delivery',color:'#f97316',city:'Hyderabad, TS',eta:'By 8 PM today'},
+  {lat:23.0225,lng:72.5714,courier:'DTDC',tracking:'DTDC67543219080',product:"Levi's 511 Slim Jeans",status:'In Transit',color:'#eab308',city:'Ahmedabad, GJ',eta:'Tomorrow by noon'},
+];
+
+function makeIcon(color,pulse){
+  const ring=pulse?`<circle cx="12" cy="12" r="12" fill="${color}" opacity=".2"><animate attributeName="r" from="8" to="20" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" from=".4" to="0" dur="1.8s" repeatCount="indefinite"/></circle>`:''
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="${color}" opacity=".08"/>${ring}<circle cx="14" cy="14" r="8" fill="${color}" stroke="rgba(255,255,255,.7)" stroke-width="2"/></svg>`;
+  return L.divIcon({html:svg,className:'',iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-16]});
+}
+
+orders.forEach(o=>{
+  const pulse=o.status==='Out for Delivery';
+  L.marker([o.lat,o.lng],{icon:makeIcon(o.color,pulse)})
+    .addTo(map)
+    .bindPopup(`<div style="min-width:180px">
+      <div style="font-size:.625rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#566986;margin-bottom:.375rem">${o.courier}</div>
+      <div style="font-weight:600;color:#e8edf5;margin-bottom:.25rem">${o.product}</div>
+      <div style="font-family:monospace;font-size:.75rem;color:#8fa0be;margin-bottom:.5rem">${o.tracking}</div>
+      <div style="display:flex;align-items:center;gap:.375rem;font-size:.75rem;margin-bottom:.25rem">
+        <span style="width:7px;height:7px;border-radius:50%;background:${o.color};display:inline-block"></span>
+        <span style="color:${o.color};font-weight:600">${o.status}</span>
+      </div>
+      <div style="font-size:.75rem;color:#566986">📍 ${o.city}</div>
+      <div style="font-size:.75rem;color:#8fa0be;margin-top:.125rem">${o.eta}</div>
+    </div>`);
+});
+
+/* ── Tab filter ── */
+function filterCards(el,status){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.dcard').forEach(c=>{
+    c.style.display=(status==='all'||c.dataset.status===status)?'':'none';
+  });
+}
+
+/* ── Scroll reveal ── */
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');observer.unobserve(e.target)}});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+/* ── Notification toasts ── */
+const toastsEl=document.getElementById('toasts');
+const toastData=[
+  {icon:'📦',color:'var(--ofd)',title:'Out for delivery!',msg:'DEL7429287160 — Mumbai, MH',delay:2000},
+  {icon:'✅',color:'var(--delivered)',title:'Delivered',msg:'XB55443322110 — Delhi, DL',delay:5000},
+  {icon:'⚠️',color:'var(--delayed)',title:'Shipment delayed',msg:'EKT9988776655 — 2 days',delay:8500},
+];
+toastData.forEach(t=>{
+  setTimeout(()=>{
+    const now=new Date();
+    const time=now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const div=document.createElement('div');
+    div.className='toast';
+    div.innerHTML=`
+      <div class="toast-icon" style="background:rgba(99,102,241,.12);color:${t.color}">${t.icon}</div>
+      <div class="toast-body">
+        <div class="toast-title">${t.title}</div>
+        <div class="toast-msg">${t.msg}</div>
+      </div>
+      <div class="toast-time">${time}</div>`;
+    toastsEl.appendChild(div);
+    setTimeout(()=>{div.style.transition='opacity .4s,transform .4s';div.style.opacity='0';div.style.transform='translateX(100%)';setTimeout(()=>div.remove(),450)},4000);
+  },t.delay);
+});
+
+/* ── Hint chips fill search ── */
+document.querySelectorAll('.hint-chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    document.getElementById('main-search').value=chip.textContent;
+  });
+});
+</script>
 </body>
 </html>
