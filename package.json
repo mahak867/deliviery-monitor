@@ -1,0 +1,17 @@
+{
+  "name": "swiftseva-india-superapp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "All-in-one Indian delivery platform with customer, rider, vendor, and admin apps.",
+  "scripts": {
+    "start": "node server.js",
+    "start:strict-auth": "cross-env ENFORCE_AUTH=true node server.js",
+    "start:postgres": "cross-env PERSISTENCE_MODE=postgres node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}

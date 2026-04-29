@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftSeva Vendor App</title>
+  <link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+  <div class="container">
+    <header class="top">
+      <h1>Vendor App</h1>
+      <p>Accept orders, move preparation stages, and hand over ready orders for pickup.</p>
+      <nav class="nav">
+        <a href="/index.html">Platform Home</a>
+        <a href="/customer.html">Customer App</a>
+        <a href="/rider.html">Rider App</a>
+        <a href="/admin.html">Admin App</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="stack">
+        <article class="panel">
+          <h2>Vendor Queue</h2>
+          <div class="row two">
+            <input id="authToken" placeholder="Vendor/Admin token (Bearer token value)">
+            <button id="saveToken" class="btn-soft">Save Token</button>
+          </div>
+          <div class="row two">
+            <button id="checkSession" class="btn-soft">Check Session</button>
+            <div id="authHint" class="hint">Token optional unless ENFORCE_AUTH=true.</div>
+          </div>
+          <div class="row two">
+            <select id="vendorId">
+              <option value="V-F-BLR">V-F-BLR | Bengaluru Food Hub</option>
+              <option value="V-G-BLR">V-G-BLR | Bengaluru Grocery Mart</option>
+              <option value="V-E-BLR">V-E-BLR | Bengaluru Tech Stop</option>
+              <option value="V-F-MUM">V-F-MUM | Mumbai Food Hub</option>
+              <option value="V-G-MUM">V-G-MUM | Mumbai Grocery Mart</option>
+              <option value="V-E-MUM">V-E-MUM | Mumbai Tech Stop</option>
+              <option value="V-F-DEL">V-F-DEL | Delhi Food Hub</option>
+              <option value="V-G-DEL">V-G-DEL | Delhi Grocery Mart</option>
+              <option value="V-E-DEL">V-E-DEL | Delhi Tech Stop</option>
+            </select>
+            <button id="refreshOrders" class="btn-soft">Refresh Queue</button>
+          </div>
+          <div id="queueHint" class="hint"></div>
+          <div id="ordersList" class="list"></div>
+        </article>
+      </section>
+
+      <aside class="stack">
+        <article class="panel">
+          <h2>Queue Metrics</h2>
+          <div class="kpi-grid">
+            <div class="kpi"><strong id="kpiTotal">0</strong><span>Total</span></div>
+            <div class="kpi"><strong id="kpiPending">0</strong><span>Pending</span></div>
+            <div class="kpi"><strong id="kpiReady">0</strong><span>Ready</span></div>
+          </div>
+        </article>
+        <article class="panel">
+          <h2>Status Meaning</h2>
+          <div class="status-line">CONFIRMED: store accepted order.</div>
+          <div class="status-line">PREPARING: item packing/cooking in progress.</div>
+          <div class="status-line">READY_FOR_PICKUP: ready for rider or partner pickup.</div>
+          <div class="status-line">REJECTED: cannot fulfill, customer gets cancellation.</div>
+        </article>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    let authToken = localStorage.getItem("swiftseva_token") || "";
+
+    const refs = {
+      authToken: document.getElementById("authToken"),
+      saveToken: document.getElementById("saveToken"),
+      checkSession: document.getElementById("checkSession"),
+      authHint: document.getElementById("authHint"),
+      vendorId: document.getElementById("vendorId"),
+      refreshOrders: document.getElementById("refreshOrders"),
+      queueHint: document.getElementById("queueHint"),
+      ordersList: document.getElementById("ordersList"),
+      kpiTotal: document.getElementById("kpiTotal"),
+      kpiPending: document.getElementById("kpiPending"),
+      kpiReady: document.getElementById("kpiReady")
+    };
+
+    async function api(path, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+      const response = await fetch(path, {
+        headers,
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || "Request failed");
+      }
+      return data;
+    }
+
+    function saveToken() {
+      authToken = refs.authToken.value.trim();
+      if (authToken) localStorage.setItem("swiftseva_token", authToken);
+      else localStorage.removeItem("swiftseva_token");
+      refs.authHint.textContent = authToken ? "Token saved." : "Token cleared.";
+    }
+
+    async function checkSession() {
+      try {
+        const data = await api("/api/auth/me");
+        refs.authHint.textContent = data.authenticated
+          ? `Session: ${data.user.role} ${data.user.phone}`
+          : "No active session token.";
+      } catch (error) {
+        refs.authHint.textContent = error.message;
+      }
+    }
+
+    function inr(value) {
+      return "Rs " + Number(value).toFixed(2);
+    }
+
+    function computeKpis(orders) {
+      refs.kpiTotal.textContent = orders.length;
+      refs.kpiPending.textContent = orders.filter((order) => ["PENDING", "CONFIRMED", "PREPARING"].includes(order.vendorStatus)).length;
+      refs.kpiReady.textContent = orders.filter((order) => order.vendorStatus === "READY_FOR_PICKUP").length;
+    }
+
+    function renderOrders(orders) {
+      refs.ordersList.innerHTML = "";
+      if (!orders.length) {
+        refs.ordersList.innerHTML = "<div class='hint'>No active orders for this vendor.</div>";
+        return;
+      }
+      orders.forEach((order) => {
+        const itemSummary = order.items.map((item) => `${item.name} x${item.qty}`).join(", ");
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="title mono">${order.id}</div>
+              <div class="sub">${order.customerName} | ${order.cityName} | ${order.deliveryMode}</div>
+            </div>
+            <span class="pill">${order.vendorStatus}</span>
+          </div>
+          <div class="sub">${itemSummary}</div>
+          <div class="sub">Total ${inr(order.totals.total)} | Dispatch ${order.dispatch.mode}</div>
+          <div class="actions">
+            <button class="btn-soft" data-status="CONFIRMED">Confirm</button>
+            <button class="btn-soft" data-status="PREPARING">Preparing</button>
+            <button class="btn-good" data-status="READY_FOR_PICKUP">Ready</button>
+            <button class="btn-soft" data-status="REJECTED">Reject</button>
+          </div>
+        `;
+        card.querySelectorAll("button[data-status]").forEach((button) => {
+          button.addEventListener("click", () => updateStatus(order.id, button.dataset.status));
+        });
+        refs.ordersList.appendChild(card);
+      });
+    }
+
+    async function loadOrders() {
+      const vendorId = refs.vendorId.value;
+      refs.queueHint.textContent = "Loading queue...";
+      try {
+        const data = await api(`/api/vendor/orders?vendorId=${encodeURIComponent(vendorId)}`);
+        refs.queueHint.textContent = `Loaded ${data.orders.length} active orders.`;
+        computeKpis(data.orders);
+        renderOrders(data.orders);
+      } catch (error) {
+        refs.queueHint.textContent = error.message;
+      }
+    }
+
+    async function updateStatus(orderId, status) {
+      try {
+        await api(`/api/vendor/orders/${encodeURIComponent(orderId)}/status`, {
+          method: "POST",
+          body: JSON.stringify({ status })
+        });
+        refs.queueHint.textContent = `${orderId} updated to ${status}.`;
+        loadOrders();
+      } catch (error) {
+        refs.queueHint.textContent = error.message;
+      }
+    }
+
+    refs.authToken.value = authToken;
+    refs.saveToken.addEventListener("click", saveToken);
+    refs.checkSession.addEventListener("click", checkSession);
+    refs.refreshOrders.addEventListener("click", loadOrders);
+    refs.vendorId.addEventListener("change", loadOrders);
+    loadOrders();
+  </script>
+</body>
+</html>

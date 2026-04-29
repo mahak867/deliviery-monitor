@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftSeva Platform</title>
+  <link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+  <div class="container">
+    <header class="top">
+      <h1>SwiftSeva India Delivery Platform</h1>
+      <p>Hybrid logistics + multi-payment + role-based operations for Customer, Vendor, Rider, and Admin.</p>
+      <nav class="nav">
+        <a href="/customer.html">Customer App</a>
+        <a href="/vendor.html">Vendor App</a>
+        <a href="/rider.html">Rider App</a>
+        <a href="/admin.html">Admin App</a>
+        <a href="/customer_prototype.html">Customer Prototype (Legacy UI)</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="stack">
+        <article class="panel">
+          <h2>What is Built</h2>
+          <div class="list">
+            <div class="card">
+              <div class="title">Customer Ordering</div>
+              <div class="sub">Catalog discovery, cart, pincode serviceability, coupon, checkout, and order tracking timeline.</div>
+            </div>
+            <div class="card">
+              <div class="title">Vendor Workflow</div>
+              <div class="sub">Incoming order queue with status transitions: confirmed, preparing, ready for pickup, rejected.</div>
+            </div>
+            <div class="card">
+              <div class="title">Rider Workflow</div>
+              <div class="sub">Own-fleet pickup assignment, accept job, and mark out-for-delivery or delivered.</div>
+            </div>
+            <div class="card">
+              <div class="title">Admin Control Tower</div>
+              <div class="sub">Real-time metrics, order visibility, ticket feed, and hybrid fleet policy controls.</div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <aside class="stack">
+        <article class="panel">
+          <h2>India Launch Cities (Recommended)</h2>
+          <div class="tags">
+            <span class="pill">Bengaluru</span>
+            <span class="pill">Mumbai</span>
+            <span class="pill">Delhi NCR</span>
+            <span class="pill">Hyderabad</span>
+            <span class="pill">Pune</span>
+            <span class="pill">Chennai</span>
+            <span class="pill">Kolkata</span>
+            <span class="pill">Ahmedabad</span>
+          </div>
+          <p class="footer">These cities are seeded with pincode mapping and hybrid dispatch defaults.</p>
+        </article>
+        <article class="panel">
+          <h2>Backend Endpoints</h2>
+          <p class="sub mono">GET /api/bootstrap<br>GET /api/catalog<br>POST /api/customer/orders<br>GET /api/vendor/orders<br>GET /api/rider/orders<br>GET /api/admin/metrics</p>
+        </article>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

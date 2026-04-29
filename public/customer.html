@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftSeva Customer App</title>
+  <link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+  <div class="container">
+    <header class="top">
+      <h1>Customer App</h1>
+      <p>Order food, groceries, medicines, electronics, and parcel pickups with India-first delivery flows.</p>
+      <nav class="nav">
+        <a href="/index.html">Platform Home</a>
+        <a href="/vendor.html">Vendor App</a>
+        <a href="/rider.html">Rider App</a>
+        <a href="/admin.html">Admin App</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="stack">
+        <article class="panel">
+          <h2>Profile & Delivery Check</h2>
+          <div class="card">
+            <h3>Auth Session (OTP)</h3>
+            <div class="row three">
+              <input id="authPhone" placeholder="+91 98xxxxxx90">
+              <select id="authRole">
+                <option value="customer">customer</option>
+                <option value="vendor">vendor</option>
+                <option value="rider">rider</option>
+                <option value="admin">admin</option>
+              </select>
+              <input id="authName" placeholder="Your name">
+            </div>
+            <div class="row three">
+              <input id="authChallengeId" placeholder="challenge id" readonly>
+              <input id="authCode" placeholder="OTP code">
+              <button class="btn-soft" id="requestOtp">Request OTP</button>
+            </div>
+            <div class="actions">
+              <button class="btn-soft" id="verifyOtp">Verify OTP</button>
+              <button class="btn-soft" id="fetchMe">Check Session</button>
+            </div>
+            <div class="row two">
+              <input id="authToken" placeholder="Bearer token (auto-filled after verify)">
+              <button class="btn-soft" id="saveToken">Save Token</button>
+            </div>
+            <div id="authResult" class="hint"></div>
+          </div>
+          <div class="row two">
+            <div>
+              <label for="customerName">Name</label>
+              <input id="customerName" placeholder="Mahak Sharma">
+            </div>
+            <div>
+              <label for="customerPhone">Phone</label>
+              <input id="customerPhone" placeholder="+91 98xxxxxx90">
+            </div>
+          </div>
+          <div class="row two">
+            <div>
+              <label for="customerPincode">Pincode</label>
+              <input id="customerPincode" maxlength="6" placeholder="560001">
+            </div>
+            <div>
+              <label for="customerAddress">Address</label>
+              <input id="customerAddress" placeholder="12, MG Road, Bengaluru">
+            </div>
+          </div>
+          <div class="row two">
+            <button class="btn-soft" id="checkPincode">Check Serviceability</button>
+            <div id="pincodeResult" class="status-line">Enter pincode and check before placing order.</div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Discover Catalog</h2>
+          <div class="row two">
+            <input id="search" placeholder="Search biryani, milk, charger, medicine...">
+            <select id="category"></select>
+          </div>
+          <div id="catalog" class="list"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Support Ticket</h2>
+          <div class="row two">
+            <input id="ticketOrderId" placeholder="Order ID (optional)">
+            <select id="ticketChannel">
+              <option value="chat">Chat</option>
+              <option value="call">Call</option>
+              <option value="email">Email</option>
+            </select>
+          </div>
+          <div class="row">
+            <textarea id="ticketIssue" placeholder="Describe your issue..."></textarea>
+          </div>
+          <div class="row two">
+            <select id="ticketPriority">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+            <button class="btn-soft" id="submitTicket">Raise Ticket</button>
+          </div>
+          <div id="ticketResult" class="hint"></div>
+        </article>
+      </section>
+
+      <aside class="stack">
+        <article class="panel">
+          <h2>Cart & Checkout</h2>
+          <div id="cartList" class="list"></div>
+          <div class="row two">
+            <select id="deliveryMode">
+              <option value="standard">Standard</option>
+              <option value="express">Express</option>
+              <option value="scheduled">Scheduled</option>
+            </select>
+            <input id="scheduleAt" type="datetime-local">
+          </div>
+          <div class="row two">
+            <select id="paymentMethod">
+              <option value="upi">UPI</option>
+              <option value="card">Card</option>
+              <option value="wallet">Wallet</option>
+              <option value="cod">Cash on Delivery</option>
+            </select>
+            <input id="couponCode" placeholder="Coupon: SAVE120/FESTIVE10">
+          </div>
+          <div class="row two">
+            <label><input type="checkbox" id="plusMember"> SwiftSeva Plus</label>
+            <input id="distanceKm" type="number" min="1" value="5" placeholder="Distance Km">
+          </div>
+          <div class="status-line" id="cartSummary">Cart is empty.</div>
+          <button class="btn" id="placeOrder">Place Order</button>
+          <div class="hint" id="orderResult"></div>
+        </article>
+
+        <article class="panel">
+          <h2>My Orders</h2>
+          <div class="actions">
+            <button class="btn-soft" id="loadOrders">Refresh Orders</button>
+          </div>
+          <div id="ordersList" class="list"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Order Tracking</h2>
+          <div id="trackingView" class="hint">Select an order to view timeline.</div>
+        </article>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      categories: ["All"],
+      catalog: [],
+      filtered: [],
+      cachedCatalog: [],
+      cart: {},
+      selectedOrderId: null,
+      authToken: localStorage.getItem("swiftseva_token") || ""
+    };
+
+    const refs = {
+      customerName: document.getElementById("customerName"),
+      customerPhone: document.getElementById("customerPhone"),
+      customerPincode: document.getElementById("customerPincode"),
+      customerAddress: document.getElementById("customerAddress"),
+      authPhone: document.getElementById("authPhone"),
+      authRole: document.getElementById("authRole"),
+      authName: document.getElementById("authName"),
+      authChallengeId: document.getElementById("authChallengeId"),
+      authCode: document.getElementById("authCode"),
+      requestOtp: document.getElementById("requestOtp"),
+      verifyOtp: document.getElementById("verifyOtp"),
+      fetchMe: document.getElementById("fetchMe"),
+      authToken: document.getElementById("authToken"),
+      saveToken: document.getElementById("saveToken"),
+      authResult: document.getElementById("authResult"),
+      checkPincode: document.getElementById("checkPincode"),
+      pincodeResult: document.getElementById("pincodeResult"),
+      search: document.getElementById("search"),
+      category: document.getElementById("category"),
+      catalog: document.getElementById("catalog"),
+      cartList: document.getElementById("cartList"),
+      deliveryMode: document.getElementById("deliveryMode"),
+      scheduleAt: document.getElementById("scheduleAt"),
+      paymentMethod: document.getElementById("paymentMethod"),
+      couponCode: document.getElementById("couponCode"),
+      plusMember: document.getElementById("plusMember"),
+      distanceKm: document.getElementById("distanceKm"),
+      cartSummary: document.getElementById("cartSummary"),
+      placeOrder: document.getElementById("placeOrder"),
+      orderResult: document.getElementById("orderResult"),
+      loadOrders: document.getElementById("loadOrders"),
+      ordersList: document.getElementById("ordersList"),
+      trackingView: document.getElementById("trackingView"),
+      ticketOrderId: document.getElementById("ticketOrderId"),
+      ticketChannel: document.getElementById("ticketChannel"),
+      ticketIssue: document.getElementById("ticketIssue"),
+      ticketPriority: document.getElementById("ticketPriority"),
+      submitTicket: document.getElementById("submitTicket"),
+      ticketResult: document.getElementById("ticketResult")
+    };
+
+    function inr(value) {
+      return "Rs " + Number(value).toFixed(2);
+    }
+
+    async function api(path, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      };
+      const token = state.authToken || localStorage.getItem("swiftseva_token") || "";
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      const response = await fetch(path, {
+        headers,
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || "Request failed");
+      }
+      return data;
+    }
+
+    function saveTokenValue(token) {
+      state.authToken = (token || "").trim();
+      if (state.authToken) {
+        localStorage.setItem("swiftseva_token", state.authToken);
+      } else {
+        localStorage.removeItem("swiftseva_token");
+      }
+      refs.authToken.value = state.authToken;
+    }
+
+    async function requestOtp() {
+      const phone = refs.authPhone.value.trim() || refs.customerPhone.value.trim();
+      const role = refs.authRole.value;
+      const name = refs.authName.value.trim() || refs.customerName.value.trim();
+      try {
+        const data = await api("/api/auth/request-otp", {
+          method: "POST",
+          body: JSON.stringify({ phone, role, name })
+        });
+        refs.authChallengeId.value = data.challengeId || "";
+        refs.authResult.textContent = data.devOtp
+          ? `OTP generated (dev): ${data.devOtp}`
+          : "OTP sent to phone.";
+      } catch (error) {
+        refs.authResult.textContent = error.message;
+      }
+    }
+
+    async function verifyOtpFlow() {
+      const payload = {
+        phone: refs.authPhone.value.trim() || refs.customerPhone.value.trim(),
+        role: refs.authRole.value,
+        name: refs.authName.value.trim() || refs.customerName.value.trim(),
+        challengeId: refs.authChallengeId.value.trim(),
+        code: refs.authCode.value.trim()
+      };
+      try {
+        const data = await api("/api/auth/verify-otp", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        saveTokenValue(data.token || "");
+        refs.authResult.textContent = `Logged in as ${data.user.role} (${data.user.phone}).`;
+        if (!refs.customerPhone.value.trim()) refs.customerPhone.value = data.user.phone;
+        if (!refs.customerName.value.trim()) refs.customerName.value = data.user.name;
+      } catch (error) {
+        refs.authResult.textContent = error.message;
+      }
+    }
+
+    async function fetchMe() {
+      try {
+        const data = await api("/api/auth/me");
+        if (!data.authenticated) {
+          refs.authResult.textContent = "No active authenticated session.";
+          return;
+        }
+        refs.authResult.textContent = `Session active: ${data.user.role} ${data.user.phone}`;
+      } catch (error) {
+        refs.authResult.textContent = error.message;
+      }
+    }
+
+    async function loadBootstrap() {
+      const data = await api("/api/bootstrap");
+      state.categories = ["All", ...data.categories];
+      renderCategoryOptions();
+    }
+
+    async function loadCatalog() {
+      const q = encodeURIComponent(refs.search.value.trim());
+      const category = encodeURIComponent(refs.category.value || "All");
+      const data = await api(`/api/catalog?category=${category}&q=${q}`);
+      state.catalog = data.items;
+      renderCatalog();
+    }
+
+    function renderCategoryOptions() {
+      refs.category.innerHTML = "";
+      state.categories.forEach((cat) => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        refs.category.appendChild(option);
+      });
+    }
+
+    function addToCart(productId) {
+      state.cart[productId] = (state.cart[productId] || 0) + 1;
+      renderCart();
+    }
+
+    function updateCart(productId, delta) {
+      const next = (state.cart[productId] || 0) + delta;
+      if (next <= 0) {
+        delete state.cart[productId];
+      } else {
+        state.cart[productId] = next;
+      }
+      renderCart();
+    }
+
+    function cartItems() {
+      return Object.entries(state.cart).map(([productId, qty]) => {
+        const product = state.catalog.find((item) => item.id === productId)
+          || state.cachedCatalog.find((item) => item.id === productId);
+        return product ? { ...product, qty } : null;
+      }).filter(Boolean);
+    }
+
+    function renderCatalog() {
+      refs.catalog.innerHTML = "";
+      if (!state.catalog.length) {
+        refs.catalog.innerHTML = "<div class='hint'>No products found for this filter.</div>";
+        return;
+      }
+      state.catalog.forEach((item) => {
+        const existing = state.cachedCatalog.find((p) => p.id === item.id);
+        if (!existing) state.cachedCatalog.push(item);
+      });
+      state.catalog.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="title">${item.name}</div>
+              <div class="sub">${item.category} | ETA ${item.eta} min</div>
+            </div>
+            <div class="price">${inr(item.price)}</div>
+          </div>
+          <div class="actions">
+            <button class="btn-soft">Add to Cart</button>
+          </div>
+        `;
+        card.querySelector("button").addEventListener("click", () => addToCart(item.id));
+        refs.catalog.appendChild(card);
+      });
+    }
+
+    function renderCart() {
+      const items = cartItems();
+      refs.cartList.innerHTML = "";
+      if (!items.length) {
+        refs.cartList.innerHTML = "<div class='hint'>No items in cart.</div>";
+        refs.cartSummary.textContent = "Cart is empty.";
+        return;
+      }
+      let subtotal = 0;
+      items.forEach((item) => {
+        subtotal += item.price * item.qty;
+        const row = document.createElement("div");
+        row.className = "card";
+        row.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="title">${item.name}</div>
+              <div class="sub">${inr(item.price)} each</div>
+            </div>
+            <div class="price">${inr(item.price * item.qty)}</div>
+          </div>
+          <div class="actions">
+            <button class="btn-soft minus">-</button>
+            <span class="pill">Qty ${item.qty}</span>
+            <button class="btn-soft plus">+</button>
+          </div>
+        `;
+        row.querySelector(".minus").addEventListener("click", () => updateCart(item.id, -1));
+        row.querySelector(".plus").addEventListener("click", () => updateCart(item.id, 1));
+        refs.cartList.appendChild(row);
+      });
+      refs.cartSummary.textContent = `Subtotal ${inr(subtotal)} | Items ${items.length}`;
+    }
+
+    async function checkServiceability() {
+      const pincode = refs.customerPincode.value.trim();
+      if (!/^\d{6}$/.test(pincode)) {
+        refs.pincodeResult.textContent = "Enter valid 6-digit pincode.";
+        refs.pincodeResult.className = "status-line bad";
+        return;
+      }
+      try {
+        const data = await api(`/api/customer/serviceability?pincode=${encodeURIComponent(pincode)}`);
+        if (!data.serviceable) {
+          refs.pincodeResult.textContent = data.message;
+          refs.pincodeResult.className = "status-line bad";
+          return;
+        }
+        refs.pincodeResult.textContent = `Service available in ${data.city}. Suggested: ${data.recommendedMode}.`;
+        refs.pincodeResult.className = "status-line ok";
+      } catch (error) {
+        refs.pincodeResult.textContent = error.message;
+        refs.pincodeResult.className = "status-line bad";
+      }
+    }
+
+    async function placeOrder() {
+      const items = cartItems().map((item) => ({ productId: item.id, qty: item.qty }));
+      if (!items.length) {
+        refs.orderResult.textContent = "Add at least one item before checkout.";
+        return;
+      }
+      const payload = {
+        customerName: refs.customerName.value.trim(),
+        phone: refs.customerPhone.value.trim(),
+        pincode: refs.customerPincode.value.trim(),
+        address: refs.customerAddress.value.trim(),
+        paymentMethod: refs.paymentMethod.value,
+        deliveryMode: refs.deliveryMode.value,
+        scheduledAt: refs.scheduleAt.value || null,
+        couponCode: refs.couponCode.value.trim(),
+        plusMember: refs.plusMember.checked,
+        distanceKm: Number(refs.distanceKm.value || 5),
+        items
+      };
+      try {
+        const data = await api("/api/customer/orders", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        refs.orderResult.textContent = `Order ${data.order.id} placed. ETA ${data.promise.etaMins} mins via ${data.promise.dispatchMode}.`;
+        state.cart = {};
+        renderCart();
+        loadOrders();
+      } catch (error) {
+        refs.orderResult.textContent = error.message;
+      }
+    }
+
+    async function loadOrders() {
+      const phone = refs.customerPhone.value.trim();
+      if (!phone) {
+        refs.ordersList.innerHTML = "<div class='hint'>Enter phone number to fetch your orders.</div>";
+        return;
+      }
+      try {
+        const data = await api(`/api/customer/orders?phone=${encodeURIComponent(phone)}`);
+        renderOrders(data.orders);
+      } catch (error) {
+        refs.ordersList.innerHTML = `<div class='hint bad'>${error.message}</div>`;
+      }
+    }
+
+    function renderOrders(orders) {
+      refs.ordersList.innerHTML = "";
+      if (!orders.length) {
+        refs.ordersList.innerHTML = "<div class='hint'>No orders found.</div>";
+        return;
+      }
+      orders.forEach((order) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="title mono">${order.id}</div>
+              <div class="sub">${order.city} | ${order.customerStatus} | ${order.dispatchMode}</div>
+            </div>
+            <div class="price">${inr(order.totals.total)}</div>
+          </div>
+          <div class="actions">
+            <button class="btn-soft track">Track</button>
+            <button class="btn-soft cancel">Cancel</button>
+          </div>
+        `;
+        card.querySelector(".track").addEventListener("click", () => loadOrderTracking(order.id));
+        card.querySelector(".cancel").addEventListener("click", () => cancelOrder(order.id));
+        refs.ordersList.appendChild(card);
+      });
+    }
+
+    async function loadOrderTracking(orderId) {
+      try {
+        const data = await api(`/api/customer/orders/${encodeURIComponent(orderId)}`);
+        const order = data.order;
+        const lines = order.timeline.map((entry) => `<div class="status-line">${entry.status}: ${entry.note}</div>`).join("");
+        refs.trackingView.innerHTML = `
+          <div class="card">
+            <div class="title mono">${order.id}</div>
+            <div class="sub">Status: ${order.customerStatus} | Vendor: ${order.vendorId} | Rider: ${order.riderId || "unassigned"}</div>
+            <div class="sub">Payment: ${order.payment.method} via ${order.payment.gateway} (${order.payment.status})</div>
+            ${lines}
+          </div>
+        `;
+      } catch (error) {
+        refs.trackingView.innerHTML = `<div class='hint bad'>${error.message}</div>`;
+      }
+    }
+
+    async function cancelOrder(orderId) {
+      try {
+        const data = await api(`/api/customer/orders/${encodeURIComponent(orderId)}/cancel`, {
+          method: "POST",
+          body: JSON.stringify({})
+        });
+        refs.orderResult.textContent = `Order ${data.order.id} cancelled.`;
+        loadOrders();
+      } catch (error) {
+        refs.orderResult.textContent = error.message;
+      }
+    }
+
+    async function submitTicket() {
+      const payload = {
+        phone: refs.customerPhone.value.trim(),
+        orderId: refs.ticketOrderId.value.trim() || null,
+        issue: refs.ticketIssue.value.trim(),
+        channel: refs.ticketChannel.value,
+        priority: refs.ticketPriority.value
+      };
+      if (!payload.phone || !payload.issue) {
+        refs.ticketResult.textContent = "Phone and issue are required.";
+        return;
+      }
+      try {
+        const data = await api("/api/support/tickets", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        refs.ticketResult.textContent = `Ticket created: ${data.ticket.id}`;
+        refs.ticketIssue.value = "";
+      } catch (error) {
+        refs.ticketResult.textContent = error.message;
+      }
+    }
+
+    function bindEvents() {
+      refs.requestOtp.addEventListener("click", requestOtp);
+      refs.verifyOtp.addEventListener("click", verifyOtpFlow);
+      refs.fetchMe.addEventListener("click", fetchMe);
+      refs.saveToken.addEventListener("click", () => {
+        saveTokenValue(refs.authToken.value);
+        refs.authResult.textContent = state.authToken ? "Token saved." : "Token cleared.";
+      });
+      refs.search.addEventListener("input", loadCatalog);
+      refs.category.addEventListener("change", loadCatalog);
+      refs.checkPincode.addEventListener("click", checkServiceability);
+      refs.placeOrder.addEventListener("click", placeOrder);
+      refs.loadOrders.addEventListener("click", loadOrders);
+      refs.submitTicket.addEventListener("click", submitTicket);
+      refs.deliveryMode.addEventListener("change", () => {
+        refs.scheduleAt.disabled = refs.deliveryMode.value !== "scheduled";
+      });
+    }
+
+    async function init() {
+      refs.authToken.value = state.authToken;
+      refs.scheduleAt.disabled = true;
+      await loadBootstrap();
+      await loadCatalog();
+      renderCart();
+      bindEvents();
+      if (state.authToken) {
+        fetchMe();
+      }
+    }
+
+    init().catch((error) => {
+      refs.catalog.innerHTML = `<div class="hint bad">${error.message}</div>`;
+    });
+  </script>
+</body>
+</html>
