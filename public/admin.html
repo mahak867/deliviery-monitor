@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftSeva Admin App</title>
+  <link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+  <div class="container">
+    <header class="top">
+      <h1>Admin Control Tower</h1>
+      <p>Observe platform health, tune hybrid fleet policy, and monitor support tickets.</p>
+      <nav class="nav">
+        <a href="/index.html">Platform Home</a>
+        <a href="/customer.html">Customer App</a>
+        <a href="/vendor.html">Vendor App</a>
+        <a href="/rider.html">Rider App</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="stack">
+        <article class="panel">
+          <h2>Live Metrics</h2>
+          <div class="row two">
+            <input id="authToken" placeholder="Admin token (Bearer token value)">
+            <button class="btn-soft" id="saveToken">Save Token</button>
+          </div>
+          <div class="row two">
+            <button class="btn-soft" id="checkSession">Check Session</button>
+            <div id="authHint" class="hint">Token optional unless ENFORCE_AUTH=true.</div>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi"><strong id="mTotal">0</strong><span>Total Orders</span></div>
+            <div class="kpi"><strong id="mActive">0</strong><span>Active</span></div>
+            <div class="kpi"><strong id="mDelivered">0</strong><span>Delivered</span></div>
+            <div class="kpi"><strong id="mOwn">0</strong><span>Own Fleet</span></div>
+            <div class="kpi"><strong id="mPartner">0</strong><span>Partner Routed</span></div>
+            <div class="kpi"><strong id="mRevenue">Rs 0</strong><span>Revenue</span></div>
+          </div>
+          <div class="actions">
+            <button class="btn-soft" id="refreshMetrics">Refresh Metrics</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Orders Explorer</h2>
+          <div class="row three">
+            <select id="statusFilter">
+              <option value="">All Statuses</option>
+              <option value="PLACED">PLACED</option>
+              <option value="CONFIRMED">CONFIRMED</option>
+              <option value="PREPARING">PREPARING</option>
+              <option value="READY_FOR_PICKUP">READY_FOR_PICKUP</option>
+              <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
+              <option value="DELIVERED">DELIVERED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+            <select id="cityFilter">
+              <option value="">All Cities</option>
+              <option value="BLR">BLR</option>
+              <option value="MUM">MUM</option>
+              <option value="DEL">DEL</option>
+              <option value="HYD">HYD</option>
+              <option value="PUN">PUN</option>
+              <option value="CHE">CHE</option>
+              <option value="KOL">KOL</option>
+              <option value="AMD">AMD</option>
+              <option value="JPR">JPR</option>
+              <option value="LKO">LKO</option>
+            </select>
+            <button class="btn-soft" id="refreshOrders">Refresh Orders</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>City</th>
+                  <th>Status</th>
+                  <th>Dispatch</th>
+                  <th>Vendor</th>
+                  <th>Rider</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <aside class="stack">
+        <article class="panel">
+          <h2>Fleet Policy</h2>
+          <label for="minOwn">Minimum own-fleet share (0.1 - 0.9)</label>
+          <input id="minOwn" type="number" step="0.01" min="0.1" max="0.9">
+          <label><input type="checkbox" id="expressPriority"> Express orders prefer own fleet</label>
+          <div class="actions">
+            <button class="btn" id="savePolicy">Save Policy</button>
+          </div>
+          <div class="hint" id="policyHint"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Support Tickets</h2>
+          <div class="actions">
+            <button class="btn-soft" id="refreshTickets">Refresh Tickets</button>
+          </div>
+          <div id="ticketList" class="list"></div>
+        </article>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    let authToken = localStorage.getItem("swiftseva_token") || "";
+
+    const refs = {
+      authToken: document.getElementById("authToken"),
+      saveToken: document.getElementById("saveToken"),
+      checkSession: document.getElementById("checkSession"),
+      authHint: document.getElementById("authHint"),
+      mTotal: document.getElementById("mTotal"),
+      mActive: document.getElementById("mActive"),
+      mDelivered: document.getElementById("mDelivered"),
+      mOwn: document.getElementById("mOwn"),
+      mPartner: document.getElementById("mPartner"),
+      mRevenue: document.getElementById("mRevenue"),
+      refreshMetrics: document.getElementById("refreshMetrics"),
+      statusFilter: document.getElementById("statusFilter"),
+      cityFilter: document.getElementById("cityFilter"),
+      refreshOrders: document.getElementById("refreshOrders"),
+      ordersTable: document.getElementById("ordersTable"),
+      minOwn: document.getElementById("minOwn"),
+      expressPriority: document.getElementById("expressPriority"),
+      savePolicy: document.getElementById("savePolicy"),
+      policyHint: document.getElementById("policyHint"),
+      refreshTickets: document.getElementById("refreshTickets"),
+      ticketList: document.getElementById("ticketList")
+    };
+
+    async function api(path, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+      const response = await fetch(path, {
+        headers,
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || "Request failed");
+      }
+      return data;
+    }
+
+    function saveToken() {
+      authToken = refs.authToken.value.trim();
+      if (authToken) localStorage.setItem("swiftseva_token", authToken);
+      else localStorage.removeItem("swiftseva_token");
+      refs.authHint.textContent = authToken ? "Token saved." : "Token cleared.";
+    }
+
+    async function checkSession() {
+      try {
+        const data = await api("/api/auth/me");
+        refs.authHint.textContent = data.authenticated
+          ? `Session: ${data.user.role} ${data.user.phone}`
+          : "No active session token.";
+      } catch (error) {
+        refs.authHint.textContent = error.message;
+      }
+    }
+
+    function inr(value) {
+      return "Rs " + Number(value).toFixed(2);
+    }
+
+    async function loadMetrics() {
+      const data = await api("/api/admin/metrics");
+      const m = data.metrics;
+      refs.mTotal.textContent = m.totalOrders;
+      refs.mActive.textContent = m.active;
+      refs.mDelivered.textContent = m.delivered;
+      refs.mOwn.textContent = m.ownFleet;
+      refs.mPartner.textContent = m.partnerRouted;
+      refs.mRevenue.textContent = inr(m.revenue);
+    }
+
+    async function loadOrders() {
+      const status = refs.statusFilter.value;
+      const city = refs.cityFilter.value;
+      const params = new URLSearchParams();
+      if (status) params.set("status", status);
+      if (city) params.set("city", city);
+      const data = await api(`/api/admin/orders?${params.toString()}`);
+      refs.ordersTable.innerHTML = "";
+      data.orders.slice(0, 100).forEach((order) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="mono">${order.id}</td>
+          <td>${order.cityId}</td>
+          <td>${order.customerStatus}</td>
+          <td>${order.dispatch.mode}</td>
+          <td>${order.vendorId}</td>
+          <td>${order.riderId || "-"}</td>
+          <td>${inr(order.totals.total)}</td>
+        `;
+        refs.ordersTable.appendChild(row);
+      });
+    }
+
+    async function loadPolicy() {
+      const data = await api("/api/admin/fleet-policy");
+      refs.minOwn.value = data.settings.minimumOwnFleetShare;
+      refs.expressPriority.checked = data.settings.expressOwnPriority;
+    }
+
+    async function savePolicy() {
+      const payload = {
+        minimumOwnFleetShare: Number(refs.minOwn.value),
+        expressOwnPriority: refs.expressPriority.checked
+      };
+      try {
+        const data = await api("/api/admin/fleet-policy", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        refs.policyHint.textContent = `Policy saved. Own share ${data.settings.minimumOwnFleetShare}, express priority ${data.settings.expressOwnPriority}.`;
+      } catch (error) {
+        refs.policyHint.textContent = error.message;
+      }
+    }
+
+    async function loadTickets() {
+      const data = await api("/api/admin/tickets");
+      refs.ticketList.innerHTML = "";
+      if (!data.tickets.length) {
+        refs.ticketList.innerHTML = "<div class='hint'>No tickets yet.</div>";
+        return;
+      }
+      data.tickets.slice(0, 30).forEach((ticket) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="title mono">${ticket.id}</div>
+              <div class="sub">${ticket.channel} | ${ticket.priority} | ${ticket.status}</div>
+            </div>
+            <div class="sub">${ticket.phone}</div>
+          </div>
+          <div class="sub">${ticket.issue}</div>
+          <div class="sub">Order: ${ticket.orderId || "-"}</div>
+        `;
+        refs.ticketList.appendChild(card);
+      });
+    }
+
+    async function refreshAll() {
+      try {
+        await Promise.all([loadMetrics(), loadOrders(), loadPolicy(), loadTickets()]);
+      } catch (error) {
+        refs.policyHint.textContent = error.message;
+      }
+    }
+
+    refs.authToken.value = authToken;
+    refs.saveToken.addEventListener("click", saveToken);
+    refs.checkSession.addEventListener("click", checkSession);
+    refs.refreshMetrics.addEventListener("click", loadMetrics);
+    refs.refreshOrders.addEventListener("click", loadOrders);
+    refs.statusFilter.addEventListener("change", loadOrders);
+    refs.cityFilter.addEventListener("change", loadOrders);
+    refs.savePolicy.addEventListener("click", savePolicy);
+    refs.refreshTickets.addEventListener("click", loadTickets);
+
+    refreshAll();
+  </script>
+</body>
+</html>

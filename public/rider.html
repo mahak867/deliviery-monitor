@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftSeva Rider App</title>
+  <link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+  <div class="container">
+    <header class="top">
+      <h1>Rider App</h1>
+      <p>Accept ready pickups from own-fleet pool and update last-mile order status.</p>
+      <nav class="nav">
+        <a href="/index.html">Platform Home</a>
+        <a href="/customer.html">Customer App</a>
+        <a href="/vendor.html">Vendor App</a>
+        <a href="/admin.html">Admin App</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="stack">
+        <article class="panel">
+          <h2>Rider Identity</h2>
+          <div class="row two">
+            <input id="authToken" placeholder="Rider/Admin token (Bearer token value)">
+            <button class="btn-soft" id="saveToken">Save Token</button>
+          </div>
+          <div class="row two">
+            <button class="btn-soft" id="checkSession">Check Session</button>
+            <div id="authHint" class="hint">Token optional unless ENFORCE_AUTH=true.</div>
+          </div>
+          <div class="row two">
+            <select id="riderId">
+              <option value="R-BLR-01">R-BLR-01 | Rahul K | Bengaluru</option>
+              <option value="R-BLR-02">R-BLR-02 | Sita P | Bengaluru</option>
+              <option value="R-MUM-01">R-MUM-01 | Aman T | Mumbai</option>
+              <option value="R-DEL-01">R-DEL-01 | Neha R | Delhi NCR</option>
+            </select>
+            <button class="btn-soft" id="refreshAll">Refresh</button>
+          </div>
+          <div id="riderHint" class="hint"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Available Pickups</h2>
+          <div id="availableOrders" class="list"></div>
+        </article>
+      </section>
+
+      <aside class="stack">
+        <article class="panel">
+          <h2>My Active Orders</h2>
+          <div id="assignedOrders" class="list"></div>
+        </article>
+        <article class="panel">
+          <h2>Rider Tips</h2>
+          <div class="status-line">Mark OUT_FOR_DELIVERY immediately after pickup.</div>
+          <div class="status-line">Mark DELIVERED only after customer confirmation.</div>
+          <div class="status-line">COD orders are auto-marked as collected on delivery.</div>
+        </article>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    let authToken = localStorage.getItem("swiftseva_token") || "";
+
+    const refs = {
+      authToken: document.getElementById("authToken"),
+      saveToken: document.getElementById("saveToken"),
+      checkSession: document.getElementById("checkSession"),
+      authHint: document.getElementById("authHint"),
+      riderId: document.getElementById("riderId"),
+      refreshAll: document.getElementById("refreshAll"),
+      riderHint: document.getElementById("riderHint"),
+      availableOrders: document.getElementById("availableOrders"),
+      assignedOrders: document.getElementById("assignedOrders")
+    };
+
+    async function api(path, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+      const response = await fetch(path, {
+        headers,
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || "Request failed");
+      }
+      return data;
+    }
+
+    function saveToken() {
+      authToken = refs.authToken.value.trim();
+      if (authToken) localStorage.setItem("swiftseva_token", authToken);
+      else localStorage.removeItem("swiftseva_token");
+      refs.authHint.textContent = authToken ? "Token saved." : "Token cleared.";
+    }
+
+    async function checkSession() {
+      try {
+        const data = await api("/api/auth/me");
+        refs.authHint.textContent = data.authenticated
+          ? `Session: ${data.user.role} ${data.user.phone}`
+          : "No active session token.";
+      } catch (error) {
+        refs.authHint.textContent = error.message;
+      }
+    }
+
+    function inr(value) {
+      return "Rs " + Number(value).toFixed(2);
+    }
+
+    function renderAvailable(orders) {
+      refs.availableOrders.innerHTML = "";
+      if (!orders.length) {
+        refs.availableOrders.innerHTML = "<div class='hint'>No ready pickups now.</div>";
+        return;
+      }
+      orders.forEach((order) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="title mono">${order.id}</div>
+              <div class="sub">${order.cityName} | ${order.customerStatus}</div>
+            </div>
+            <div class="price">${inr(order.totals.total)}</div>
+          </div>
+          <div class="sub">${order.address}</div>
+          <div class="actions">
+            <button class="btn-good">Accept Pickup</button>
+          </div>
+        `;
+        card.querySelector("button").addEventListener("click", () => acceptOrder(order.id));
+        refs.availableOrders.appendChild(card);
+      });
+    }
+
+    function renderAssigned(orders) {
+      refs.assignedOrders.innerHTML = "";
+      if (!orders.length) {
+        refs.assignedOrders.innerHTML = "<div class='hint'>No assigned orders.</div>";
+        return;
+      }
+      orders.forEach((order) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="title mono">${order.id}</div>
+              <div class="sub">${order.customerName} | ${order.cityName}</div>
+            </div>
+            <span class="pill">${order.customerStatus}</span>
+          </div>
+          <div class="sub">${order.address}</div>
+          <div class="actions">
+            <button class="btn-soft" data-status="OUT_FOR_DELIVERY">Out for Delivery</button>
+            <button class="btn-good" data-status="DELIVERED">Mark Delivered</button>
+          </div>
+        `;
+        card.querySelectorAll("button[data-status]").forEach((button) => {
+          button.addEventListener("click", () => updateOrderStatus(order.id, button.dataset.status));
+        });
+        refs.assignedOrders.appendChild(card);
+      });
+    }
+
+    async function loadAvailable() {
+      const data = await api("/api/rider/orders?scope=available");
+      renderAvailable(data.orders);
+    }
+
+    async function loadAssigned() {
+      const riderId = refs.riderId.value;
+      const data = await api(`/api/rider/orders?scope=assigned&riderId=${encodeURIComponent(riderId)}`);
+      renderAssigned(data.orders);
+    }
+
+    async function acceptOrder(orderId) {
+      const riderId = refs.riderId.value;
+      try {
+        await api(`/api/rider/orders/${encodeURIComponent(orderId)}/accept`, {
+          method: "POST",
+          body: JSON.stringify({ riderId })
+        });
+        refs.riderHint.textContent = `${orderId} accepted successfully.`;
+        refreshAll();
+      } catch (error) {
+        refs.riderHint.textContent = error.message;
+      }
+    }
+
+    async function updateOrderStatus(orderId, status) {
+      const riderId = refs.riderId.value;
+      try {
+        await api(`/api/rider/orders/${encodeURIComponent(orderId)}/status`, {
+          method: "POST",
+          body: JSON.stringify({ riderId, status })
+        });
+        refs.riderHint.textContent = `${orderId} updated to ${status}.`;
+        refreshAll();
+      } catch (error) {
+        refs.riderHint.textContent = error.message;
+      }
+    }
+
+    async function refreshAll() {
+      refs.riderHint.textContent = "Refreshing rider queues...";
+      try {
+        await Promise.all([loadAvailable(), loadAssigned()]);
+        refs.riderHint.textContent = "Queues refreshed.";
+      } catch (error) {
+        refs.riderHint.textContent = error.message;
+      }
+    }
+
+    refs.authToken.value = authToken;
+    refs.saveToken.addEventListener("click", saveToken);
+    refs.checkSession.addEventListener("click", checkSession);
+    refs.refreshAll.addEventListener("click", refreshAll);
+    refs.riderId.addEventListener("change", refreshAll);
+    refreshAll();
+  </script>
+</body>
+</html>

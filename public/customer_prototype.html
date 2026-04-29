@@ -1,0 +1,1534 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>SwiftSeva | India Delivery Super App</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-soft: #f0f4ff;
+      --ink: #16203a;
+      --ink-muted: #5e6a86;
+      --brand: #f97316;
+      --brand-deep: #ea580c;
+      --green: #16a34a;
+      --blue: #2563eb;
+      --red: #dc2626;
+      --border: #dbe3f3;
+      --shadow: 0 20px 45px rgba(9, 25, 64, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(249, 115, 22, 0.16), transparent 34%),
+        radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.15), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .topbar {
+      background: linear-gradient(145deg, #111f43, #152b5f);
+      color: #fff;
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar::after {
+      content: "";
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(249, 115, 22, 0.35), rgba(255, 255, 255, 0.04));
+    }
+
+    .topbar-row {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand h1 {
+      font-size: 1.5rem;
+      letter-spacing: 0.3px;
+      margin-bottom: 2px;
+    }
+
+    .brand p {
+      font-size: 0.84rem;
+      opacity: 0.86;
+      max-width: 470px;
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    select,
+    input,
+    button,
+    textarea {
+      font-family: inherit;
+    }
+
+    .language-select {
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      color: #fff;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 0.82rem;
+      min-width: 125px;
+    }
+
+    .language-select option {
+      color: #111827;
+      background: #fff;
+    }
+
+    .ticker {
+      margin-top: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ticker strong {
+      color: #fdba74;
+      font-weight: 600;
+    }
+
+    .quick-nav {
+      margin: 12px 2px 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .quick-nav a {
+      text-decoration: none;
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      padding: 8px 12px;
+      transition: all 0.25s ease;
+    }
+
+    .quick-nav a:hover {
+      border-color: #c7d4ef;
+      transform: translateY(-2px);
+    }
+
+    .layout {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 10px 26px rgba(9, 25, 64, 0.06);
+      padding: 16px;
+      animation: rise 0.45s ease both;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tiny-note {
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #fff7ed, #eff6ff);
+      border: 1px solid #ffe0c7;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .hero h2 {
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+
+    .hero p {
+      color: var(--ink-muted);
+      font-size: 0.86rem;
+    }
+
+    .pincode-row,
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .input {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: #9ab3e9;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.87rem;
+      padding: 10px 13px;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(140deg, var(--brand), var(--brand-deep));
+      color: #fff;
+    }
+
+    .btn-soft {
+      background: var(--panel-soft);
+      color: #1e40af;
+      border: 1px solid #c7d4ef;
+    }
+
+    .btn-green {
+      background: #15803d;
+      color: #fff;
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+      min-height: 18px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0 10px;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--ink-muted);
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .chip.active {
+      background: #fef3e9;
+      color: #9a3412;
+      border-color: #fdba74;
+    }
+
+    .product-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    }
+
+    .product {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .product-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .product-name {
+      font-size: 0.93rem;
+      font-weight: 600;
+    }
+
+    .product-cat {
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+    }
+
+    .badge {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      padding: 4px 8px;
+      border: 1px solid #c7d4ef;
+      white-space: nowrap;
+    }
+
+    .price {
+      display: flex;
+      gap: 7px;
+      align-items: baseline;
+      margin-top: 2px;
+    }
+
+    .price .current {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .price .old {
+      color: #8b97b0;
+      text-decoration: line-through;
+      font-size: 0.82rem;
+    }
+
+    .meta-row {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .cart-items {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .cart-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      background: #fff;
+    }
+
+    .cart-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .qty-box {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .qty-box button {
+      width: 28px;
+      border: none;
+      cursor: pointer;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 1rem;
+    }
+
+    .qty-box span {
+      min-width: 28px;
+      text-align: center;
+      padding-top: 3px;
+      font-size: 0.83rem;
+      font-weight: 600;
+    }
+
+    .fieldset {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 11px;
+      margin-top: 10px;
+    }
+
+    .fieldset legend {
+      padding: 0 6px;
+      font-size: 0.77rem;
+      color: var(--ink-muted);
+    }
+
+    .choice-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .choice {
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 7px 10px;
+      border-radius: 10px;
+      font-size: 0.79rem;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .bill {
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      display: grid;
+      gap: 6px;
+      font-size: 0.84rem;
+    }
+
+    .bill-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--ink-muted);
+    }
+
+    .bill-row.total {
+      color: var(--ink);
+      font-size: 1rem;
+      font-weight: 700;
+      padding-top: 5px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .highlight {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .order-card {
+      margin-top: 10px;
+      border: 1px solid #bbf7d0;
+      background: #f0fdf4;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 0.83rem;
+      display: none;
+    }
+
+    .timeline {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .timeline li {
+      border-left: 3px solid #d9e2f5;
+      padding: 3px 0 3px 10px;
+      color: #6b7280;
+      font-size: 0.82rem;
+      position: relative;
+    }
+
+    .timeline li::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 8px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d9e2f5;
+    }
+
+    .timeline li.active {
+      color: #1e3a8a;
+      border-color: #60a5fa;
+      font-weight: 600;
+    }
+
+    .timeline li.active::before {
+      background: #2563eb;
+    }
+
+    .timeline li.done {
+      color: #14532d;
+      border-color: #4ade80;
+    }
+
+    .timeline li.done::before {
+      background: #16a34a;
+    }
+
+    .map-box {
+      margin-top: 10px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(45deg, rgba(37, 99, 235, 0.05) 25%, transparent 25%) 0 0 / 22px 22px,
+        linear-gradient(-45deg, rgba(22, 163, 74, 0.05) 25%, transparent 25%) 0 0 / 22px 22px,
+        #f8fbff;
+      padding: 12px;
+      font-size: 0.82rem;
+      color: #334155;
+      min-height: 92px;
+    }
+
+    .map-box strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .grid-two {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 10px;
+    }
+
+    .quick-btn {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      text-align: left;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: #334155;
+    }
+
+    .quick-btn strong {
+      display: block;
+      color: #0f172a;
+      margin-bottom: 4px;
+      font-size: 0.84rem;
+    }
+
+    .address-list {
+      margin-top: 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .address {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 10px;
+      font-size: 0.81rem;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .address.active {
+      border-color: #60a5fa;
+      background: #eff6ff;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+      font-size: 0.81rem;
+      background: #fff;
+    }
+
+    .history-item .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--ink-muted);
+    }
+
+    .history-item .title {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .helper {
+      color: var(--ink-muted);
+      font-size: 0.78rem;
+      margin-top: 4px;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      background: #fff;
+    }
+
+    .switch-row input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .contrast {
+      --bg: #0b1020;
+      --panel: #111a30;
+      --panel-soft: #1d2b49;
+      --ink: #f8fbff;
+      --ink-muted: #d6def5;
+      --border: #31405e;
+    }
+
+    .senior {
+      font-size: 18px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .product-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-row">
+        <div class="brand">
+          <h1 id="copy-title">SwiftSeva</h1>
+          <p id="copy-subtitle">One app for food, groceries, medicines, parcels, and essentials across India.</p>
+        </div>
+        <div class="top-controls">
+          <span class="pill">Live ETA <strong id="eta-pill">22 min</strong></span>
+          <span class="pill">Wallet <strong id="wallet-pill">Rs 350</strong></span>
+          <label class="sr-only" for="language">Language</label>
+          <select id="language" class="language-select">
+            <option value="en">English</option>
+            <option value="hi">Hindi (Roman)</option>
+            <option value="hg">Hinglish</option>
+          </select>
+        </div>
+      </div>
+      <div class="ticker" id="ticker-copy"><strong>Today:</strong> Free standard delivery above Rs 699 + medicine orders verified in under 8 mins.</div>
+    </header>
+
+    <div class="quick-nav">
+      <a href="#discover">Discover</a>
+      <a href="#checkout">Checkout</a>
+      <a href="#tracking">Tracking</a>
+      <a href="#support">Support</a>
+    </div>
+
+    <main class="layout">
+      <div class="stack">
+        <section class="panel" id="discover">
+          <div class="panel-title">
+            <span id="copy-discover">Discover Deliveries</span>
+            <span class="tiny-note" id="city-label">City: Bengaluru</span>
+          </div>
+          <div class="hero">
+            <h2 id="copy-hero-title">Namaste, ready for quick delivery?</h2>
+            <p id="copy-hero-sub">Track every order, save monthly with membership, and choose UPI, wallet, card, or cash on delivery.</p>
+            <div class="pincode-row">
+              <input class="input" id="pincode" maxlength="6" placeholder="Enter 6-digit pincode">
+              <button class="btn btn-primary" id="check-pincode">Check Service</button>
+            </div>
+            <div class="status" id="pincode-status"></div>
+          </div>
+
+          <div class="search-row">
+            <input class="input" id="search" placeholder="Search biryani, milk, medicine, charger, parcel...">
+            <button class="btn btn-soft" id="voice-search">Voice Pick</button>
+          </div>
+
+          <div class="chips" id="category-chips"></div>
+          <div class="product-grid" id="product-grid"></div>
+        </section>
+
+        <section class="panel" id="checkout">
+          <div class="panel-title">
+            <span id="copy-cart">Smart Cart & Checkout</span>
+            <span class="tiny-note" id="cart-count-note">0 items</span>
+          </div>
+
+          <div class="cart-items" id="cart-items"></div>
+
+          <fieldset class="fieldset">
+            <legend>Delivery Type</legend>
+            <div class="choice-group">
+              <label class="choice"><input type="radio" name="deliveryMode" value="standard" checked> Standard (35)</label>
+              <label class="choice"><input type="radio" name="deliveryMode" value="express"> Express (79)</label>
+              <label class="choice"><input type="radio" name="deliveryMode" value="scheduled"> Scheduled (49)</label>
+            </div>
+            <div id="schedule-wrap" style="display:none;margin-top:8px;">
+              <input class="input" id="schedule-time" type="datetime-local">
+            </div>
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend>Payment</legend>
+            <div class="choice-group">
+              <label class="choice"><input type="radio" name="paymentMethod" value="upi" checked> UPI</label>
+              <label class="choice"><input type="radio" name="paymentMethod" value="card"> Card</label>
+              <label class="choice"><input type="radio" name="paymentMethod" value="wallet"> Wallet</label>
+              <label class="choice"><input type="radio" name="paymentMethod" value="cod"> Cash on Delivery</label>
+            </div>
+            <div class="switch-row">
+              <span>Use wallet balance first (Rs 350)</span>
+              <input type="checkbox" id="wallet-toggle" checked>
+            </div>
+            <div class="switch-row">
+              <span>Group order split bill</span>
+              <input type="checkbox" id="group-order-toggle">
+            </div>
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend>Savings</legend>
+            <div class="search-row" style="margin-top:0;">
+              <input class="input" id="coupon" placeholder="Coupon: SAVE100, FESTIVE15">
+              <button class="btn btn-soft" id="apply-coupon">Apply</button>
+            </div>
+            <div class="status" id="coupon-status"></div>
+            <div class="switch-row">
+              <span>SwiftSeva Plus (free standard delivery + priority support)</span>
+              <input type="checkbox" id="plus-toggle">
+            </div>
+          </fieldset>
+
+          <div class="bill">
+            <div class="bill-row"><span>Subtotal</span><strong id="bill-subtotal">Rs 0</strong></div>
+            <div class="bill-row"><span>Discount</span><strong class="highlight" id="bill-discount">- Rs 0</strong></div>
+            <div class="bill-row"><span>Delivery fee</span><strong id="bill-delivery">Rs 0</strong></div>
+            <div class="bill-row"><span>GST (5%)</span><strong id="bill-gst">Rs 0</strong></div>
+            <div class="bill-row"><span>Wallet used</span><strong id="bill-wallet">- Rs 0</strong></div>
+            <div class="bill-row total"><span>Payable</span><strong id="bill-total">Rs 0</strong></div>
+          </div>
+
+          <button class="btn btn-green" id="place-order" style="width:100%;margin-top:12px;">Place Order</button>
+          <div class="order-card" id="order-card"></div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="panel" id="tracking">
+          <div class="panel-title">
+            <span id="copy-track">Live Tracking</span>
+            <button class="btn btn-soft" id="refresh-eta">Refresh ETA</button>
+          </div>
+          <div class="helper" id="tracking-helper">No active order yet. Place an order to start live updates.</div>
+          <ul class="timeline" id="timeline"></ul>
+          <div class="map-box">
+            <strong id="rider-name">Rider: Waiting assignment</strong>
+            <span id="rider-meta">Vehicle: -- | Contact: --</span>
+          </div>
+        </section>
+
+        <section class="panel" id="support">
+          <div class="panel-title">
+            <span id="copy-support">Customer Helper Tools</span>
+            <span class="tiny-note">Fast issue resolution</span>
+          </div>
+          <div class="grid-two">
+            <button class="quick-btn" id="btn-reorder">
+              <strong>One-tap Reorder</strong>
+              Quickly reorder your last basket.
+            </button>
+            <button class="quick-btn" id="btn-medicine">
+              <strong>Medicine Reminder</strong>
+              Setup recurring delivery alerts.
+            </button>
+            <button class="quick-btn" id="btn-parcel">
+              <strong>Parcel Pickup</strong>
+              Schedule home pickup in 20 mins.
+            </button>
+            <button class="quick-btn" id="btn-sos">
+              <strong>Priority SOS Support</strong>
+              Chat, call, and issue escalation.
+            </button>
+          </div>
+
+          <fieldset class="fieldset">
+            <legend>Saved Addresses</legend>
+            <div class="address-list" id="address-list"></div>
+            <div class="search-row">
+              <input class="input" id="new-address" placeholder="Add new address line">
+              <button class="btn btn-soft" id="add-address">Add</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend>Accessibility</legend>
+            <div class="switch-row">
+              <span>High contrast mode</span>
+              <input type="checkbox" id="contrast-toggle">
+            </div>
+            <div class="switch-row">
+              <span>Senior mode (larger text)</span>
+              <input type="checkbox" id="senior-toggle">
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <span>Recent Orders</span>
+            <span class="tiny-note">Reorder anytime</span>
+          </div>
+          <div class="history-list" id="history-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const products = [
+      { id: 1, name: "Chicken Dum Biryani", category: "Food", price: 249, mrp: 299, rating: 4.6, eta: "28 min", badge: "Top Rated" },
+      { id: 2, name: "A2 Milk 1L", category: "Grocery", price: 72, mrp: 78, rating: 4.8, eta: "16 min", badge: "Fresh" },
+      { id: 3, name: "Paracetamol 650", category: "Medicine", price: 42, mrp: 52, rating: 4.7, eta: "19 min", badge: "Verified Rx" },
+      { id: 4, name: "USB-C Fast Charger", category: "Electronics", price: 599, mrp: 799, rating: 4.5, eta: "35 min", badge: "Deal" },
+      { id: 5, name: "Farm Bananas 1kg", category: "Grocery", price: 58, mrp: 70, rating: 4.4, eta: "14 min", badge: "Local Farm" },
+      { id: 6, name: "South Indian Tiffin Combo", category: "Food", price: 179, mrp: 220, rating: 4.3, eta: "24 min", badge: "Value Meal" },
+      { id: 7, name: "BP Monitor Checkup Kit", category: "Medicine", price: 899, mrp: 1099, rating: 4.6, eta: "41 min", badge: "Care+" },
+      { id: 8, name: "Parcel Delivery Slot", category: "Parcel", price: 129, mrp: 149, rating: 4.2, eta: "Pickup 20 min", badge: "Door Pickup" }
+    ];
+
+    const categories = ["All", "Food", "Grocery", "Medicine", "Electronics", "Parcel"];
+    const voiceSuggestions = ["veg thali", "atta 5kg", "vitamin c", "parcel pickup", "pet food", "charger"];
+    const cityByPrefix = {
+      "1": "Delhi NCR",
+      "2": "North India",
+      "3": "Rajasthan Gujarat",
+      "4": "Mumbai Pune",
+      "5": "South Coast",
+      "6": "Karnataka Kerala",
+      "7": "East India",
+      "8": "Central India",
+      "9": "Hyderabad Zone"
+    };
+
+    const copy = {
+      en: {
+        title: "SwiftSeva",
+        subtitle: "One app for food, groceries, medicines, parcels, and essentials across India.",
+        ticker: "<strong>Today:</strong> Free standard delivery above Rs 699 + medicine orders verified in under 8 mins.",
+        discover: "Discover Deliveries",
+        heroTitle: "Namaste, ready for quick delivery?",
+        heroSub: "Track every order, save monthly with membership, and choose UPI, wallet, card, or cash on delivery.",
+        cart: "Smart Cart & Checkout",
+        track: "Live Tracking",
+        support: "Customer Helper Tools"
+      },
+      hi: {
+        title: "SwiftSeva",
+        subtitle: "Food, grocery, dawa, parcel aur daily zaroorat ka ek hi app.",
+        ticker: "<strong>Aaj ka offer:</strong> Rs 699 se upar free standard delivery aur medicine verification 8 minute ke andar.",
+        discover: "Delivery Khojiye",
+        heroTitle: "Namaste, tez delivery ke liye tayyar?",
+        heroSub: "Har order track kariye, membership se bachat kariye, aur UPI, wallet, card ya COD chuniye.",
+        cart: "Smart Cart aur Checkout",
+        track: "Live Tracking",
+        support: "Customer Madad Tools"
+      },
+      hg: {
+        title: "SwiftSeva",
+        subtitle: "Ek app, full on delivery scene: khana, grocery, medicine, parcel, sab kuch.",
+        ticker: "<strong>Scene on:</strong> Rs 699+ pe free standard delivery aur medicine verify under 8 min.",
+        discover: "Delivery Explorer",
+        heroTitle: "Namaste boss, kya order karein?",
+        heroSub: "Track full journey, save with Plus, pay via UPI/wallet/card/COD.",
+        cart: "Cart + Checkout Power",
+        track: "Live Order Radar",
+        support: "Customer Help Center"
+      }
+    };
+
+    const defaultState = {
+      cart: {},
+      language: "en",
+      pincode: "",
+      selectedCategory: "All",
+      coupon: "",
+      couponDiscount: 0,
+      plusMember: false,
+      walletEnabled: true,
+      addresses: [
+        "Home - 14, MG Road, Bengaluru",
+        "Office - 92, HSR Layout, Bengaluru"
+      ],
+      selectedAddress: 0,
+      highContrast: false,
+      seniorMode: false,
+      history: [
+        { id: "SV508120", total: 642, items: [1, 2, 6], date: "2026-04-26 20:10", status: "Delivered" },
+        { id: "SV507991", total: 318, items: [3, 5], date: "2026-04-24 09:40", status: "Delivered" }
+      ],
+      activeOrder: null
+    };
+
+    let state = loadState();
+    const walletBalance = 350;
+    const trackingSteps = ["Order Placed", "Store Confirmed", "Packed", "Out for Delivery", "Delivered"];
+    let trackingTimer = null;
+
+    const refs = {
+      language: document.getElementById("language"),
+      categoryChips: document.getElementById("category-chips"),
+      productGrid: document.getElementById("product-grid"),
+      search: document.getElementById("search"),
+      voiceSearch: document.getElementById("voice-search"),
+      pincode: document.getElementById("pincode"),
+      pincodeStatus: document.getElementById("pincode-status"),
+      cityLabel: document.getElementById("city-label"),
+      checkPincode: document.getElementById("check-pincode"),
+      cartItems: document.getElementById("cart-items"),
+      cartCount: document.getElementById("cart-count-note"),
+      couponInput: document.getElementById("coupon"),
+      couponStatus: document.getElementById("coupon-status"),
+      applyCoupon: document.getElementById("apply-coupon"),
+      plusToggle: document.getElementById("plus-toggle"),
+      walletToggle: document.getElementById("wallet-toggle"),
+      groupToggle: document.getElementById("group-order-toggle"),
+      subtotal: document.getElementById("bill-subtotal"),
+      discount: document.getElementById("bill-discount"),
+      delivery: document.getElementById("bill-delivery"),
+      gst: document.getElementById("bill-gst"),
+      walletUsed: document.getElementById("bill-wallet"),
+      total: document.getElementById("bill-total"),
+      placeOrder: document.getElementById("place-order"),
+      orderCard: document.getElementById("order-card"),
+      timeline: document.getElementById("timeline"),
+      trackingHelper: document.getElementById("tracking-helper"),
+      riderName: document.getElementById("rider-name"),
+      riderMeta: document.getElementById("rider-meta"),
+      etaPill: document.getElementById("eta-pill"),
+      refreshEta: document.getElementById("refresh-eta"),
+      historyList: document.getElementById("history-list"),
+      addressList: document.getElementById("address-list"),
+      newAddress: document.getElementById("new-address"),
+      addAddress: document.getElementById("add-address"),
+      contrastToggle: document.getElementById("contrast-toggle"),
+      seniorToggle: document.getElementById("senior-toggle"),
+      scheduleWrap: document.getElementById("schedule-wrap"),
+      scheduleTime: document.getElementById("schedule-time")
+    };
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem("swiftseva_state_v1");
+        if (!saved) {
+          return { ...defaultState };
+        }
+        const parsed = JSON.parse(saved);
+        return { ...defaultState, ...parsed };
+      } catch (error) {
+        return { ...defaultState };
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem("swiftseva_state_v1", JSON.stringify(state));
+    }
+
+    function inr(value) {
+      return "Rs " + Math.round(value);
+    }
+
+    function setLanguage(lang) {
+      const langCopy = copy[lang] || copy.en;
+      document.getElementById("copy-title").textContent = langCopy.title;
+      document.getElementById("copy-subtitle").textContent = langCopy.subtitle;
+      document.getElementById("ticker-copy").innerHTML = langCopy.ticker;
+      document.getElementById("copy-discover").textContent = langCopy.discover;
+      document.getElementById("copy-hero-title").textContent = langCopy.heroTitle;
+      document.getElementById("copy-hero-sub").textContent = langCopy.heroSub;
+      document.getElementById("copy-cart").textContent = langCopy.cart;
+      document.getElementById("copy-track").textContent = langCopy.track;
+      document.getElementById("copy-support").textContent = langCopy.support;
+    }
+
+    function renderCategories() {
+      refs.categoryChips.innerHTML = "";
+      categories.forEach((cat) => {
+        const chip = document.createElement("button");
+        chip.className = "chip" + (state.selectedCategory === cat ? " active" : "");
+        chip.textContent = cat;
+        chip.type = "button";
+        chip.addEventListener("click", () => {
+          state.selectedCategory = cat;
+          saveState();
+          renderCategories();
+          renderProducts();
+        });
+        refs.categoryChips.appendChild(chip);
+      });
+    }
+
+    function renderProducts() {
+      const query = refs.search.value.trim().toLowerCase();
+      refs.productGrid.innerHTML = "";
+
+      const visible = products.filter((item) => {
+        const catMatch = state.selectedCategory === "All" || item.category === state.selectedCategory;
+        const searchMatch = !query || item.name.toLowerCase().includes(query) || item.category.toLowerCase().includes(query);
+        return catMatch && searchMatch;
+      });
+
+      if (!visible.length) {
+        refs.productGrid.innerHTML = "<div class='helper'>No items found. Try another keyword or category.</div>";
+        return;
+      }
+
+      visible.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "product";
+        card.innerHTML = `
+          <div class="product-head">
+            <div>
+              <div class="product-name">${item.name}</div>
+              <div class="product-cat">${item.category}</div>
+            </div>
+            <span class="badge">${item.badge}</span>
+          </div>
+          <div class="price"><span class="current">${inr(item.price)}</span><span class="old">${inr(item.mrp)}</span></div>
+          <div class="meta-row"><span>Rating ${item.rating}</span><span>ETA ${item.eta}</span></div>
+          <button class="btn btn-primary">Add to Cart</button>
+        `;
+        card.querySelector("button").addEventListener("click", () => addToCart(item.id));
+        refs.productGrid.appendChild(card);
+      });
+    }
+
+    function addToCart(id) {
+      state.cart[id] = (state.cart[id] || 0) + 1;
+      saveState();
+      renderCart();
+    }
+
+    function updateQty(id, delta) {
+      const next = (state.cart[id] || 0) + delta;
+      if (next <= 0) {
+        delete state.cart[id];
+      } else {
+        state.cart[id] = next;
+      }
+      saveState();
+      renderCart();
+    }
+
+    function getCartSummary() {
+      let subtotal = 0;
+      let itemCount = 0;
+      Object.entries(state.cart).forEach(([id, qty]) => {
+        const product = products.find((p) => p.id === Number(id));
+        if (product) {
+          subtotal += product.price * qty;
+          itemCount += qty;
+        }
+      });
+
+      const mode = document.querySelector("input[name='deliveryMode']:checked").value;
+      let deliveryFee = mode === "express" ? 79 : mode === "scheduled" ? 49 : 35;
+
+      if (subtotal >= 699 && mode === "standard") {
+        deliveryFee = 0;
+      }
+      if (state.plusMember) {
+        if (mode === "standard") deliveryFee = 0;
+        if (mode === "express") deliveryFee = Math.max(0, deliveryFee - 40);
+      }
+
+      const discount = Math.min(state.couponDiscount, subtotal);
+      const taxable = Math.max(0, subtotal - discount);
+      const gst = taxable * 0.05;
+      const beforeWallet = taxable + deliveryFee + gst;
+      const walletUse = state.walletEnabled ? Math.min(walletBalance, beforeWallet) : 0;
+      const total = Math.max(0, beforeWallet - walletUse);
+
+      return { subtotal, itemCount, deliveryFee, discount, gst, walletUse, total };
+    }
+
+    function renderCart() {
+      refs.cartItems.innerHTML = "";
+      const entries = Object.entries(state.cart);
+
+      if (!entries.length) {
+        refs.cartItems.innerHTML = "<div class='helper'>Your cart is empty. Add items from Discover.</div>";
+      } else {
+        entries.forEach(([id, qty]) => {
+          const product = products.find((p) => p.id === Number(id));
+          if (!product) return;
+          const row = document.createElement("div");
+          row.className = "cart-item";
+          row.innerHTML = `
+            <div>
+              <div class="cart-name">${product.name}</div>
+              <div class="tiny-note">${inr(product.price)} each</div>
+            </div>
+            <div class="qty-box">
+              <button type="button" aria-label="decrease">-</button>
+              <span>${qty}</span>
+              <button type="button" aria-label="increase">+</button>
+            </div>
+            <strong>${inr(product.price * qty)}</strong>
+          `;
+          const [minus, plus] = row.querySelectorAll("button");
+          minus.addEventListener("click", () => updateQty(product.id, -1));
+          plus.addEventListener("click", () => updateQty(product.id, 1));
+          refs.cartItems.appendChild(row);
+        });
+      }
+
+      const summary = getCartSummary();
+      refs.cartCount.textContent = `${summary.itemCount} items`;
+      refs.subtotal.textContent = inr(summary.subtotal);
+      refs.discount.textContent = "- " + inr(summary.discount);
+      refs.delivery.textContent = inr(summary.deliveryFee);
+      refs.gst.textContent = inr(summary.gst);
+      refs.walletUsed.textContent = "- " + inr(summary.walletUse);
+      refs.total.textContent = inr(summary.total);
+      refs.walletUsed.parentElement.style.display = state.walletEnabled ? "flex" : "none";
+    }
+
+    function checkPincode() {
+      const pin = refs.pincode.value.trim();
+      state.pincode = pin;
+      if (!pin) {
+        refs.pincodeStatus.textContent = "Add your pincode to unlock delivery ETA and serviceability.";
+        refs.pincodeStatus.style.color = "var(--ink-muted)";
+        saveState();
+        return false;
+      }
+      if (!/^\d{6}$/.test(pin)) {
+        refs.pincodeStatus.textContent = "Please enter a valid 6-digit pincode.";
+        refs.pincodeStatus.style.color = "var(--red)";
+        saveState();
+        return false;
+      }
+      if (pin.startsWith("000") || pin.startsWith("999")) {
+        refs.pincodeStatus.textContent = "Service unavailable in this pincode right now. Try nearby location.";
+        refs.pincodeStatus.style.color = "var(--red)";
+        saveState();
+        return false;
+      }
+      const city = cityByPrefix[pin[0]] || "India Zone";
+      refs.cityLabel.textContent = "City: " + city;
+      refs.pincodeStatus.textContent = `Great! Delivery available in ${city}. Express ETA 18-35 mins.`;
+      refs.pincodeStatus.style.color = "var(--green)";
+      saveState();
+      return true;
+    }
+
+    function applyCoupon() {
+      const code = refs.couponInput.value.trim().toUpperCase();
+      const summary = getCartSummary();
+      state.coupon = code;
+      state.couponDiscount = 0;
+
+      if (!code) {
+        refs.couponStatus.textContent = "Enter a coupon code.";
+      } else if (code === "SAVE100" && summary.subtotal >= 799) {
+        state.couponDiscount = 100;
+        refs.couponStatus.textContent = "SAVE100 applied successfully.";
+      } else if (code === "FESTIVE15" && summary.subtotal >= 499) {
+        state.couponDiscount = summary.subtotal * 0.15;
+        refs.couponStatus.textContent = "FESTIVE15 applied: 15% off.";
+      } else {
+        refs.couponStatus.textContent = "Coupon not applicable for current cart value.";
+      }
+      saveState();
+      renderCart();
+    }
+
+    function renderTimeline(stepIndex) {
+      refs.timeline.innerHTML = "";
+      trackingSteps.forEach((step, index) => {
+        const li = document.createElement("li");
+        li.textContent = step;
+        if (index < stepIndex) li.className = "done";
+        if (index === stepIndex) li.className = "active";
+        refs.timeline.appendChild(li);
+      });
+    }
+
+    function startTracking(order) {
+      if (trackingTimer) {
+        clearInterval(trackingTimer);
+      }
+
+      renderTimeline(order.step);
+      refs.trackingHelper.textContent = `Order ${order.id} is active. Current ETA ${order.eta} mins.`;
+      refs.riderName.textContent = "Rider: " + order.rider;
+      refs.riderMeta.textContent = `Vehicle: ${order.vehicle} | Contact: ${order.phone}`;
+      refs.etaPill.textContent = order.eta + " min";
+
+      trackingTimer = setInterval(() => {
+        if (!state.activeOrder) {
+          clearInterval(trackingTimer);
+          return;
+        }
+        if (state.activeOrder.step < trackingSteps.length - 1) {
+          state.activeOrder.step += 1;
+          state.activeOrder.eta = Math.max(8, state.activeOrder.eta - 4);
+          renderTimeline(state.activeOrder.step);
+          refs.trackingHelper.textContent = `Order ${state.activeOrder.id} is active. Current ETA ${state.activeOrder.eta} mins.`;
+          refs.etaPill.textContent = state.activeOrder.eta + " min";
+          saveState();
+        } else {
+          refs.trackingHelper.textContent = `Order ${state.activeOrder.id} delivered. Enjoy your order.`;
+          refs.etaPill.textContent = "Delivered";
+          const deliveredOrder = state.history.find((entry) => entry.id === state.activeOrder.id);
+          if (deliveredOrder) {
+            deliveredOrder.status = "Delivered";
+          }
+          saveState();
+          clearInterval(trackingTimer);
+        }
+      }, 12000);
+    }
+
+    function placeOrder() {
+      if (!Object.keys(state.cart).length) {
+        refs.orderCard.style.display = "block";
+        refs.orderCard.textContent = "Add items before placing the order.";
+        return;
+      }
+      if (!checkPincode()) {
+        refs.orderCard.style.display = "block";
+        refs.orderCard.textContent = "Please verify pincode before placing the order.";
+        return;
+      }
+
+      const summary = getCartSummary();
+      const mode = document.querySelector("input[name='deliveryMode']:checked").value;
+      if (mode === "scheduled" && !refs.scheduleTime.value) {
+        refs.orderCard.style.display = "block";
+        refs.orderCard.textContent = "Please choose a scheduled delivery date and time.";
+        return;
+      }
+
+      const orderId = "SV" + (Math.floor(Math.random() * 900000) + 100000);
+      const baseEta = mode === "express" ? 24 : mode === "scheduled" ? 65 : 34;
+      const order = {
+        id: orderId,
+        eta: baseEta,
+        step: 0,
+        rider: "Rahul K",
+        vehicle: "Bike KA-03",
+        phone: "+91 9xxxx x321"
+      };
+
+      state.activeOrder = order;
+      state.history.unshift({
+        id: orderId,
+        total: Math.round(summary.total),
+        items: Object.keys(state.cart).map(Number),
+        date: new Date().toISOString().slice(0, 16).replace("T", " "),
+        status: "In Progress"
+      });
+      state.cart = {};
+      state.coupon = "";
+      state.couponDiscount = 0;
+      refs.couponInput.value = "";
+      refs.couponStatus.textContent = "";
+      saveState();
+
+      refs.orderCard.style.display = "block";
+      refs.orderCard.innerHTML = `Order <strong>${orderId}</strong> placed for <strong>${inr(summary.total)}</strong>. Delivery mode: <strong>${mode}</strong>.`;
+
+      renderCart();
+      renderHistory();
+      startTracking(order);
+      document.getElementById("tracking").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderAddresses() {
+      refs.addressList.innerHTML = "";
+      state.addresses.forEach((addr, index) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "address" + (state.selectedAddress === index ? " active" : "");
+        item.textContent = addr;
+        item.addEventListener("click", () => {
+          state.selectedAddress = index;
+          saveState();
+          renderAddresses();
+        });
+        refs.addressList.appendChild(item);
+      });
+    }
+
+    function addAddress() {
+      const value = refs.newAddress.value.trim();
+      if (!value) return;
+      state.addresses.push(value);
+      state.selectedAddress = state.addresses.length - 1;
+      refs.newAddress.value = "";
+      saveState();
+      renderAddresses();
+    }
+
+    function renderHistory() {
+      refs.historyList.innerHTML = "";
+      if (!state.history.length) {
+        refs.historyList.innerHTML = "<div class='helper'>No history yet. Your placed orders appear here.</div>";
+        return;
+      }
+
+      state.history.slice(0, 8).forEach((entry) => {
+        const card = document.createElement("div");
+        card.className = "history-item";
+        const itemNames = entry.items.map((id) => {
+          const found = products.find((p) => p.id === id);
+          return found ? found.name : "Item";
+        }).slice(0, 2).join(", ");
+        card.innerHTML = `
+          <div class="title">${entry.id}</div>
+          <div class="row"><span>${entry.date}</span><strong>${entry.status}</strong></div>
+          <div class="row"><span>${itemNames}${entry.items.length > 2 ? "..." : ""}</span><strong>${inr(entry.total)}</strong></div>
+          <button class="btn btn-soft">Reorder</button>
+        `;
+        card.querySelector("button").addEventListener("click", () => {
+          entry.items.forEach((id) => {
+            state.cart[id] = (state.cart[id] || 0) + 1;
+          });
+          saveState();
+          renderCart();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        refs.historyList.appendChild(card);
+      });
+    }
+
+    function handleDeliveryModeChange() {
+      const mode = document.querySelector("input[name='deliveryMode']:checked").value;
+      refs.scheduleWrap.style.display = mode === "scheduled" ? "block" : "none";
+      renderCart();
+    }
+
+    function handleAccessibility() {
+      document.body.classList.toggle("contrast", state.highContrast);
+      document.body.classList.toggle("senior", state.seniorMode);
+      refs.contrastToggle.checked = state.highContrast;
+      refs.seniorToggle.checked = state.seniorMode;
+    }
+
+    function bindEvents() {
+      refs.search.addEventListener("input", renderProducts);
+      refs.voiceSearch.addEventListener("click", () => {
+        const choice = voiceSuggestions[Math.floor(Math.random() * voiceSuggestions.length)];
+        refs.search.value = choice;
+        renderProducts();
+      });
+      refs.checkPincode.addEventListener("click", checkPincode);
+      refs.applyCoupon.addEventListener("click", applyCoupon);
+      refs.plusToggle.addEventListener("change", () => {
+        state.plusMember = refs.plusToggle.checked;
+        saveState();
+        renderCart();
+      });
+      refs.walletToggle.addEventListener("change", () => {
+        state.walletEnabled = refs.walletToggle.checked;
+        saveState();
+        renderCart();
+      });
+      refs.groupToggle.addEventListener("change", () => {
+        const txt = refs.groupToggle.checked ? "Group split mode active. Share payment link after order." : "";
+        refs.orderCard.style.display = txt ? "block" : "none";
+        refs.orderCard.textContent = txt;
+      });
+      refs.placeOrder.addEventListener("click", placeOrder);
+      refs.language.addEventListener("change", () => {
+        state.language = refs.language.value;
+        setLanguage(state.language);
+        saveState();
+      });
+      refs.addAddress.addEventListener("click", addAddress);
+      refs.newAddress.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") addAddress();
+      });
+      refs.refreshEta.addEventListener("click", () => {
+        if (!state.activeOrder) return;
+        state.activeOrder.eta = Math.max(7, state.activeOrder.eta - 2);
+        refs.trackingHelper.textContent = `Order ${state.activeOrder.id} is active. Current ETA ${state.activeOrder.eta} mins.`;
+        refs.etaPill.textContent = state.activeOrder.eta + " min";
+        saveState();
+      });
+      refs.contrastToggle.addEventListener("change", () => {
+        state.highContrast = refs.contrastToggle.checked;
+        saveState();
+        handleAccessibility();
+      });
+      refs.seniorToggle.addEventListener("change", () => {
+        state.seniorMode = refs.seniorToggle.checked;
+        saveState();
+        handleAccessibility();
+      });
+
+      document.querySelectorAll("input[name='deliveryMode']").forEach((input) => {
+        input.addEventListener("change", handleDeliveryModeChange);
+      });
+
+      document.getElementById("btn-reorder").addEventListener("click", () => {
+        const latest = state.history[0];
+        if (!latest) return;
+        latest.items.forEach((id) => {
+          state.cart[id] = (state.cart[id] || 0) + 1;
+        });
+        saveState();
+        renderCart();
+      });
+      document.getElementById("btn-medicine").addEventListener("click", () => {
+        refs.orderCard.style.display = "block";
+        refs.orderCard.textContent = "Medicine reminder set. We will nudge you every 30 days.";
+      });
+      document.getElementById("btn-parcel").addEventListener("click", () => {
+        refs.orderCard.style.display = "block";
+        refs.orderCard.textContent = "Parcel pickup requested. Agent should arrive in 20-30 mins.";
+      });
+      document.getElementById("btn-sos").addEventListener("click", () => {
+        refs.orderCard.style.display = "block";
+        refs.orderCard.textContent = "Priority support connected. Average response time is under 2 mins.";
+      });
+    }
+
+    function init() {
+      refs.language.value = state.language;
+      refs.plusToggle.checked = state.plusMember;
+      refs.walletToggle.checked = state.walletEnabled;
+      refs.pincode.value = state.pincode;
+      refs.couponInput.value = state.coupon;
+      refs.contrastToggle.checked = state.highContrast;
+      refs.seniorToggle.checked = state.seniorMode;
+
+      setLanguage(state.language);
+      renderCategories();
+      renderProducts();
+      renderCart();
+      renderHistory();
+      renderAddresses();
+      handleAccessibility();
+      checkPincode();
+      bindEvents();
+      handleDeliveryModeChange();
+
+      if (state.activeOrder) {
+        startTracking(state.activeOrder);
+      } else {
+        renderTimeline(-1);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
